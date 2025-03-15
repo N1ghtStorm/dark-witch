@@ -8,16 +8,24 @@ fn main() {
 
     let instructions = vec![
         Instruction::Set {
-            key: "name".to_string(),
-            value: "John".to_string(),
+            key: "person1".to_string(),
+            value: "{\"name\": \"John\", \"age\": 30}".to_string(),
         },
         Instruction::Print {
-            key: "name".to_string(),
+            key: "person1".to_string(),
         },
-        Instruction::Clear,
-        Instruction::Print {
-            key: "name".to_string(),
+        Instruction::GetJsonField {
+            key: "person1".to_string(),
+            field: "name".to_string(),
         },
+        Instruction::GetJsonField {
+            key: "person1".to_string(),
+            field: "age".to_string(),
+        },
+        // Instruction::Clear,
+        // Instruction::Print {
+        //     key: "name".to_string(),
+        // },
     ];
 
     match execute(&mut main_hashmap, instructions) {

@@ -24,6 +24,20 @@ pub fn execute(
                 Some(value) => println!("{}", value),
                 None => return Err(format!("Key '{}' not found for printing", key)),
             },
+            Instruction::GetJsonField { key, field } => match hashmap.get(&key) {
+                Some(value) => {
+                    match serde_json::from_str::<serde_json::Value>(value) {
+                        Ok(json_value) => {
+                            match json_value.get(&field) {
+                                Some(field_value) => println!("JSON field '{}' in key '{}': {}", field, key, field_value),
+                                None => return Err(format!("JSON field '{}' not found in key '{}'", field, key)),
+                            }
+                        },
+                        Err(_) => return Err(format!("Value for key '{}' is not valid JSON", key)),
+                    }
+                },
+                None => return Err(format!("Key '{}' not found", key)),
+            },
             Instruction::Clear => {
                 hashmap.clear();
                 println!("Cleared all entries");
@@ -39,5 +53,6 @@ pub enum Instruction {
     Set { key: String, value: String },
     Delete { key: String },
     Print { key: String },
+    GetJsonField { key: String, field: String },
     Clear,
 }
