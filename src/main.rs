@@ -1,4 +1,5 @@
 mod witchvm;
+mod database;
 
 use std::collections::HashMap;
 use witchvm::{execute, Instruction};
