@@ -7,10 +7,17 @@ fn main() {
     let mut main_hashmap = HashMap::<String, String>::new();
 
     let instructions = vec![
-        Instruction::Set { key: "name".to_string(), value: "John".to_string() },
-        Instruction::Print { key: "name".to_string() },
+        Instruction::Set {
+            key: "name".to_string(),
+            value: "John".to_string(),
+        },
+        Instruction::Print {
+            key: "name".to_string(),
+        },
         Instruction::Clear,
-        Instruction::Print { key: "name".to_string() },
+        Instruction::Print {
+            key: "name".to_string(),
+        },
     ];
 
     match execute(&mut main_hashmap, instructions) {
@@ -18,4 +25,3 @@ fn main() {
         Err(e) => println!("Execution failed: {}", e),
     }
 }
-
