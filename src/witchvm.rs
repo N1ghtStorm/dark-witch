@@ -1,13 +1,15 @@
-use std::collections::HashMap;
 use crate::database::Database;
+use std::collections::HashMap;
 
 pub struct WitchVM {
     instruction_storage_name: Option<String>,
-}   
+}
 
 impl WitchVM {
     pub fn new() -> Self {
-        Self { instruction_storage_name: None }
+        Self {
+            instruction_storage_name: None,
+        }
     }
 
     pub fn execute(
@@ -32,7 +34,7 @@ impl WitchVM {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
                         return Err("No storage name provided".to_string());
                     };
-                    if let Err(e ) = database.insert(storage_name, key.clone(), value) {
+                    if let Err(e) = database.insert(storage_name, key.clone(), value) {
                         return Err(e);
                     }
                     println!("Set value for key '{}'", key);
@@ -48,43 +50,48 @@ impl WitchVM {
                     // match hashmap.get(&key) {
                     // Some(value) => println!("{}", value),
                     // None => return Err(format!("Key '{}' not found for printing", key)),
-                // }
-                },
+                    // }
+                }
                 Instruction::GetJsonField { key, field } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
                         return Err("No storage name provided".to_string());
                     };
 
-                    match database.get(storage_name,key.clone()) {
-                        Ok(value) => {
-                            match serde_json::from_str::<serde_json::Value>(&value) {
-                                Ok(json_value) => {
-                                    match json_value.get(&field) {
-                                        Some(field_value) => println!("JSON field '{}' in key '{}': {}", field, key, field_value),
-                                        None => return Err(format!("JSON field '{}' not found in key '{}'", field, key)),
-                                    }
-                                },
-                                Err(_) => return Err(format!("Value for key '{}' is not valid JSON", key)),
+                    match database.get(storage_name, key.clone()) {
+                        Ok(value) => match serde_json::from_str::<serde_json::Value>(&value) {
+                            Ok(json_value) => match json_value.get(&field) {
+                                Some(field_value) => println!(
+                                    "JSON field '{}' in key '{}': {}",
+                                    field, key, field_value
+                                ),
+                                None => {
+                                    return Err(format!(
+                                        "JSON field '{}' not found in key '{}'",
+                                        field, key
+                                    ))
+                                }
+                            },
+                            Err(_) => {
+                                return Err(format!("Value for key '{}' is not valid JSON", key))
                             }
                         },
                         Err(_) => return Err(format!("Key '{}' not found", key)),
-                }},
+                    }
+                }
                 Instruction::Clear => {
                     // hashmap.clear();
                     // println!("Cleared all entries");
                     todo!()
-                },
+                }
                 Instruction::UseStorage { name } => {
                     self.instruction_storage_name = Some(name);
                 }
             }
         }
-    
+
         Ok(())
     }
 }
-
-
 
 pub enum Instruction {
     UseStorage { name: String },

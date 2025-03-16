@@ -1,8 +1,8 @@
-mod witchvm;
 mod database;
+mod witchvm;
 
 use database::DatabaseInner;
-use witchvm::{WitchVM, Instruction};
+use witchvm::{Instruction, WitchVM};
 
 fn main() {
     let mut vm = WitchVM::new();
