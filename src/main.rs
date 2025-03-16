@@ -1,5 +1,6 @@
 mod database;
 mod witchvm;
+mod sql;
 
 use database::DatabaseInner;
 use witchvm::{Filter, Instruction, WitchVM};
@@ -52,6 +53,16 @@ fn main() {
         }
         Err(e) => println!("Execution failed: {}", e),
     }
+
+
+    let sql = "SELECT * FROM main WHERE age >= 30";
+    let mut lexer = sql::Lexer::new(sql);
+    let tokens = lexer.tokenize();
+    let mut parser = sql::Parser::new(tokens);
+    let ast = parser.parse();
+    println!("{:?}", ast);
+    // let bytecode = sql::compile_sql(sql);
+    // println!("{:?}", bytecode);
 }
 
 fn full_scan_instructions_1() -> Vec<Instruction> {
