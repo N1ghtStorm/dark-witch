@@ -2,6 +2,8 @@
 
 use std::fmt;
 
+use crate::witchvm::Instruction;
+
 // Lexer: Converts raw SQL into tokens
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
@@ -353,95 +355,109 @@ impl Parser {
 }
 
 // // Code Generator: Transforms AST into WitchVM instructions
-// struct CodeGenerator {
-//     instructions: Vec<String>,
-// }
+pub struct CodeGenerator {
+    pub instructions: Vec<Instruction>,
+}
 
-// impl CodeGenerator {
-//     fn new() -> Self {
-//         CodeGenerator {
-//             instructions: Vec::new(),
-//         }
-//     }
+impl CodeGenerator {
+    pub fn new() -> Self {
+        CodeGenerator {
+            instructions: Vec::new(),
+        }
+    }
     
-//     fn emit(&mut self, instruction: &str) {
-//         self.instructions.push(instruction.to_string());
-//     }
+    fn emit(&mut self, instruction: Instruction) {
+        self.instructions.push(instruction);
+    }
     
-//     fn generate(&mut self, ast: &AstNode) {
-//         match ast {
-//             AstNode::Select { columns, from, where_clause } => {
-//                 // Load the table
-//                 self.emit(&format!("LOAD_TABLE \"{}\"", from));
+    fn generate(&mut self, ast: &AstNode) {
+        match ast {
+            AstNode::Select { columns, from, where_clause } => {
+                // Load the table
+                self.emit(Instruction::UseStorage { name: from.clone() });
                 
-//                 // If there's a WHERE clause, generate condition code
-//                 if let Some(condition) = where_clause {
-//                     self.generate_condition(condition);
-//                     self.emit("FILTER");
-//                 }
+                // Handle WHERE clause if present
+                if let Some(condition) = where_clause {
+                    // self.generate_condition(condition);
+                    // self.emit(Instruction::Filter);
+                }
+
+                let predicate = match where_clause {
+                    Some(condition) => {
+                        self.generate_condition(condition)
+                    }
+                    None => {
+                        Box::new(|_: String, _: String| true)
+                    }
+                };
                 
-//                 // Project columns
-//                 match columns.as_slice() {
-//                     [ColumnExpression::AllColumns] => {
-//                         self.emit("PROJECT_ALL");
-//                     },
-//                     _ => {
-//                         // For specific columns, we would need to emit column names
-//                         self.emit("BEGIN_PROJECT");
-//                         for col in columns {
-//                             if let ColumnExpression::Column(name) = col {
-//                                 self.emit(&format!("ADD_COLUMN \"{}\"", name));
-//                             }
-//                         }
-//                         self.emit("END_PROJECT");
-//                     }
-//                 }
+                // // Project columns
+                // match columns.as_slice() {
+                //     [ColumnExpression::AllColumns] => {
+                //         self.emit(Instruction::ProjectAll);
+                //     },
+                //     _ => {
+                //         self.emit(Instruction::BeginProject);
+                //         for col in columns {
+                //             if let ColumnExpression::Column(name) = col {
+                //                 self.emit(Instruction::AddColumn(name.clone()));
+                //             }
+                //         }
+                //         self.emit(Instruction::EndProject);
+                //     }
+                // }
                 
-//                 // Finalize the query
-//                 self.emit("MATERIALIZE");
-//             },
-//             _ => {
-//                 // Other node types would be handled here
-//             }
-//         }
-//     }
+                // self.emit(Instruction::Materialize);
+            },
+            _ => {} // Other node types would be handled here
+        }
+    }
     
-//     fn generate_condition(&mut self, condition: &AstNode) {
-//         match condition {
-//             AstNode::BinaryOp { left, operator, right } => {
-//                 match (&**left, &**right) {
-//                     (AstNode::Column(col), AstNode::Literal(lit)) => {
-//                         // Push column name
-//                         self.emit(&format!("PUSH_COLUMN \"{}\"", col));
+    fn generate_condition(&mut self, condition: &AstNode) -> Box<dyn Fn(String, String) -> bool> {
+        match condition {
+            AstNode::BinaryOp { left, operator, right } => {
+                match (&**left, &**right) {
+                    (AstNode::Column(col), AstNode::Literal(lit)) => {
+                        // // Push column reference
+                        // self.emit(Instruction::PushColumn(col.clone()));
                         
-//                         // Push literal value
-//                         match lit {
-//                             LiteralValue::Number(n) => self.emit(&format!("PUSH_NUMBER {}", n)),
-//                             LiteralValue::String(s) => self.emit(&format!("PUSH_STRING \"{}\"", s)),
-//                         }
+                        // // Push literal value
+                        match lit {
+                            LiteralValue::Number(n) => {
+                                // todo!("unhandled case")
+                                Box::new(|_, value: String| {
+                                    if let Ok(json) = serde_json::from_str::<serde_json::Value>(&value) {
+                                        if let Some(age) = json.get("age").and_then(|v| v.as_i64()) {
+                                            return age >= 30;
+                                        }
+                                    }
+                                    false
+                                })
+                            },
+                            LiteralValue::String(s) => {
+                                todo!("unhandled case")
+                            },
+                        }
                         
-//                         // Apply comparison operator
-//                         match operator.as_str() {
-//                             ">" => self.emit("GT"),
-//                             ">=" => self.emit("GTE"),
-//                             "<" => self.emit("LT"),
-//                             "<=" => self.emit("LTE"),
-//                             "=" => self.emit("EQ"),
-//                             "!=" => self.emit("NEQ"),
-//                             _ => {} // Unhandled operator
-//                         }
-//                     },
-//                     _ => {
-//                         // Handle more complex expressions here
-//                     }
-//                 }
-//             },
-//             _ => {
-//                 // Other condition types would be handled here
-//             }
-//         }
-//     }
-// }
+                        // // Apply comparison operator
+                        // let op_instruction = match operator.as_str() {
+                        //     ">" => Instruction::GreaterThan,
+                        //     ">=" => Instruction::GreaterThanEqual,
+                        //     "<" => Instruction::LessThan,
+                        //     "<=" => Instruction::LessThanEqual,
+                        //     "=" => Instruction::Equal,
+                        //     "!=" => Instruction::NotEqual,
+                        //     _ => return, // Unhandled operator
+                        // };
+                        // self.emit(op_instruction);
+                    },
+                    _ => todo!("unhandled case"),// Handle more complex expressions here
+                }
+            },
+            _ => todo!("unhandled case"), // Other condition types would be handled here
+        }
+    }
+}
 
 // // Compiler: Orchestrates the entire compilation process
 // pub struct SqlCompiler;
