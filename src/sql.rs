@@ -90,6 +90,28 @@ impl Lexer {
         num_str.parse().unwrap_or(0.0)
     }
     
+    fn read_string(&mut self) -> String {
+        // Skip the opening quote
+        self.advance();
+        
+        let start = self.position;
+        while let Some(c) = self.peek() {
+            if c == '\'' {
+                break;
+            }
+            self.advance();
+        }
+        
+        let string_value = self.input[start..self.position].iter().collect();
+        
+        // Skip the closing quote
+        if self.peek() == Some('\'') {
+            self.advance();
+        }
+        
+        string_value
+    }
+    
     fn next_token(&mut self) -> Token {
         self.skip_whitespace();
         
@@ -129,8 +151,12 @@ impl Lexer {
                     Token::Equal
                 },
                 '0'..='9' => {
-                    self.read_number();
-                    Token::Number(self.read_number())
+                    let value = self.read_number();
+                    Token::Number(value)
+                },
+                '\'' => {
+                    let string_value = self.read_string();
+                    Token::String(string_value)
                 },
                 'a'..='z' | 'A'..='Z' | '_' => {
                     let identifier = self.read_identifier();

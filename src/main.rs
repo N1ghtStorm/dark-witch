@@ -61,8 +61,14 @@ fn main() {
     let mut parser = sql::Parser::new(tokens);
     let ast = parser.parse();
     println!("{:?}", ast);
-    // let bytecode = sql::compile_sql(sql);
-    // println!("{:?}", bytecode);
+
+
+    let sql = "SELECT * FROM main WHERE name = \'John\'";
+    let mut lexer = sql::Lexer::new(sql);
+    let tokens = lexer.tokenize();
+    let mut parser = sql::Parser::new(tokens);
+    let ast = parser.parse();
+    println!("{:?}", ast);
 }
 
 fn full_scan_instructions_1() -> Vec<Instruction> {
