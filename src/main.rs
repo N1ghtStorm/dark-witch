@@ -10,65 +10,103 @@ fn main() {
 
     fill_database(&mut database);
 
-    let instructions = vec![
-        Instruction::UseStorage {
-            name: "main".to_string(),
-        },
-        Instruction::GetJsonField {
-            key: "person1".to_string(),
-            field: "name".to_string(),
-        },
-        Instruction::GetJsonField {
-            key: "person1".to_string(),
-            field: "age".to_string(),
-        },
-    ];
+    // let instructions = vec![
+    //     Instruction::UseStorage {
+    //         name: "main".to_string(),
+    //     },
+    //     Instruction::GetJsonField {
+    //         key: "person1".to_string(),
+    //         field: "name".to_string(),
+    //     },
+    //     Instruction::GetJsonField {
+    //         key: "person1".to_string(),
+    //         field: "age".to_string(),
+    //     },
+    // ];
 
-    let mut vm: WitchVM = WitchVM::new();
-    match vm.execute(&mut database, instructions) {
-        Ok(_) => println!("Execution successful"),
-        Err(e) => println!("Execution failed: {}", e),
-    }
+    // println!("--------------------------------");
 
-    let mut vm: WitchVM = WitchVM::new();
-    match vm.execute(&mut database, full_scan_instructions_1()) {
-        Ok(_) => {
-            println!("{:?}", vm.into_output());
-        }
-        Err(e) => println!("Execution failed: {}", e),
-    }
+    // let mut vm: WitchVM = WitchVM::new();
+    // match vm.execute(&mut database, instructions) {
+    //     Ok(_) => println!("Execution successful"),
+    //     Err(e) => println!("Execution failed: {}", e),
+    // }
 
-    let mut vm: WitchVM = WitchVM::new();
-    match vm.execute(&mut database, full_scan_instructions_2()) {
-        Ok(_) => {
-            println!("{:?}", vm.into_output());
-        }
-        Err(e) => println!("Execution failed: {}", e),
-    }
+    // let mut vm: WitchVM = WitchVM::new();
+    // match vm.execute(&mut database, full_scan_instructions_1()) {
+    //     Ok(_) => {
+    //         println!("{:?}", vm.into_output());
+    //     }
+    //     Err(e) => println!("Execution failed: {}", e),
+    // }
 
-    let mut vm: WitchVM = WitchVM::new();
-    match vm.execute(&mut database, full_scan_instructions_all()) {
-        Ok(_) => {
-            println!("{:?}", vm.into_output());
-        }
-        Err(e) => println!("Execution failed: {}", e),
-    }
+    // println!("--------------------------------");
+
+    // let mut vm: WitchVM = WitchVM::new();
+    // match vm.execute(&mut database, full_scan_instructions_2()) {
+    //     Ok(_) => {
+    //         println!("{:?}", vm.into_output());
+    //     }
+    //     Err(e) => println!("Execution failed: {}", e),
+    // }
+
+    // println!("--------------------------------");
+
+    // let mut vm: WitchVM = WitchVM::new();
+    // match vm.execute(&mut database, full_scan_instructions_all()) {
+    //     Ok(_) => {
+    //         println!("{:?}", vm.into_output());
+    //     }
+    //     Err(e) => println!("Execution failed: {}", e),
+    // }
 
 
-    let sql = "SELECT * FROM main WHERE age >= 30";
+    // println!("--------------------------------");
+
+    // let sql = "SELECT * FROM main WHERE age >= 30";
+    // let mut lexer = sql::Lexer::new(sql);
+    // let tokens = lexer.tokenize();
+    // let mut parser = sql::Parser::new(tokens);
+    // let ast = parser.parse();
+    // println!("{:?}", ast);
+
+    // println!("--------------------------------");
+
+
+    // let sql = "SELECT * FROM main WHERE name = \'John\'";
+    // let mut lexer = sql::Lexer::new(sql);
+    // let tokens = lexer.tokenize();
+    // let mut parser = sql::Parser::new(tokens);
+    // let ast = parser.parse();
+    // let mut generator = sql::CodeGenerator::new();
+    // generator.generate(&ast.unwrap());
+    // let mut vm: WitchVM = WitchVM::new();
+    // match vm.execute(&mut database, generator.instructions) {
+    //     Ok(_) => {
+    //         println!("{:?}", vm.into_output());
+    //     }
+    //     Err(e) => println!("Execution failed: {}", e),
+    // }
+
+
+    println!("--------------------------------");
+
+    let sql = "SELECT * FROM main WHERE name = \'Jim\'";
     let mut lexer = sql::Lexer::new(sql);
     let tokens = lexer.tokenize();
     let mut parser = sql::Parser::new(tokens);
     let ast = parser.parse();
-    println!("{:?}", ast);
+    let mut generator = sql::CodeGenerator::new();
+    generator.generate(&ast.unwrap());
+    let mut vm: WitchVM = WitchVM::new();
+    match vm.execute(&mut database, generator.instructions) {
+        Ok(_) => {
+            println!("{:?}", vm.into_output());
+        }
+        Err(e) => println!("Execution failed: {}", e),
+    }
 
-
-    let sql = "SELECT * FROM main WHERE name = \'John\'";
-    let mut lexer = sql::Lexer::new(sql);
-    let tokens = lexer.tokenize();
-    let mut parser = sql::Parser::new(tokens);
-    let ast = parser.parse();
-    println!("{:?}", ast);
+    // println!("{:?}", generator.instructions);
 }
 
 fn full_scan_instructions_1() -> Vec<Instruction> {

@@ -370,18 +370,13 @@ impl CodeGenerator {
         self.instructions.push(instruction);
     }
     
-    fn generate(&mut self, ast: &AstNode) {
+    pub fn generate(&mut self, ast: &AstNode) {
         match ast {
             AstNode::Select { columns, from, where_clause } => {
                 // Load the table
                 self.emit(Instruction::UseStorage { name: from.clone() });
                 
                 // Handle WHERE clause if present
-                if let Some(condition) = where_clause {
-                    // self.generate_condition(condition);
-                    // self.emit(Instruction::Filter);
-                }
-
                 let predicate = match where_clause {
                     Some(condition) => {
                         self.generate_condition(condition)
@@ -390,6 +385,10 @@ impl CodeGenerator {
                         Box::new(|_: String, _: String| true)
                     }
                 };
+
+                self.emit(Instruction::FullScan {
+                    maybe_filter: Some(crate::witchvm::Filter::Condition(predicate)),
+                });
                 
                 // // Project columns
                 // match columns.as_slice() {
@@ -413,57 +412,38 @@ impl CodeGenerator {
         }
     }
     
-    fn generate_condition(&mut self, condition: &AstNode) -> Box<dyn Fn(String, String) -> bool> {
+    fn generate_condition(&mut self, condition: &AstNode) -> Box<dyn Fn(String, String) -> bool + 'static> {
         match condition {
             AstNode::BinaryOp { left, operator, right } => {
                 match (&**left, &**right) {
                     (AstNode::Column(col), AstNode::Literal(lit)) => {
-                        // // Push column reference
-                        // self.emit(Instruction::PushColumn(col.clone()));
-                        
-                        // // Push literal value
                         let col = col.clone();
                         match lit {
                             LiteralValue::Number(n) => {
-                                // todo!("unhandled case")
-                                // let json_field = col.clone();
-
-
+                                let operator = operator.clone();
+                                let n = n.clone();
                                 Box::new(move |_, value: String| {
                                     if let Ok(json) = serde_json::from_str::<serde_json::Value>(&value) {
                                         if let Some(field) = json.get(col.as_str()).and_then(|v| v.as_i64()) {
-                                            // return field >= 30;
-                                            return cond(field, operator.clone(), n.clone() as i64);
-                                            // return match operator.as_str() {
-                                            //     // ">" => field > *n as i64,
-                                            //     // ">=" => field >= *n as i64,
-                                            //     // "<" => field < *n as i64,
-                                            //     // "<=" => field <= *n as i64,
-                                            //     // "=" => field == *n as i64,
-                                            //     // "!=" => field != *n as i64,
-                                            //     _ => todo!("unhandled case"),
-                                            // }
+                                            return num_cond(field, operator.clone(), n as i64);
                                         }
                                     }
                                     false
                                 })
                             },
                             LiteralValue::String(s) => {
-                                todo!("unhandled case")
+                                let operator = operator.clone();
+                                let s = s.clone();
+                                Box::new(move |_, value: String| {
+                                    if let Ok(json) = serde_json::from_str::<serde_json::Value>(&value) {
+                                        if let Some(name) = json.get("name").and_then(|v| v.as_str()) {
+                                            return str_cond(name.to_string(), operator.clone(), s.clone());
+                                        }
+                                    }
+                                    false
+                                })
                             },
                         }
-                        
-                        // // Apply comparison operator
-                        // let op_instruction = match operator.as_str() {
-                        //     ">" => Instruction::GreaterThan,
-                        //     ">=" => Instruction::GreaterThanEqual,
-                        //     "<" => Instruction::LessThan,
-                        //     "<=" => Instruction::LessThanEqual,
-                        //     "=" => Instruction::Equal,
-                        //     "!=" => Instruction::NotEqual,
-                        //     _ => return, // Unhandled operator
-                        // };
-                        // self.emit(op_instruction);
                     },
                     _ => todo!("unhandled case"),// Handle more complex expressions here
                 }
@@ -472,8 +452,6 @@ impl CodeGenerator {
         }
     }
 }
-
-// // Compiler: Orchestrates the entire compilation process
 // pub struct SqlCompiler;
 
 // impl SqlCompiler {
@@ -517,12 +495,20 @@ impl CodeGenerator {
 //     compile_sql_example("SELECT * FROM main WHERE age >= 30")
 // }
 
-fn cond(field: i64, operator: String, value: i64) -> bool {
+fn num_cond(field: i64, operator: String, value: i64) -> bool {
     match operator.as_str() {
         ">" => field > value,
         ">=" => field >= value,
         "<" => field < value,
         "<=" => field <= value,
+        "=" => field == value,
+        "!=" => field != value,
+        _ => todo!("unhandled case"),
+    }
+}
+
+fn str_cond(field: String, operator: String, value: String) -> bool {
+    match operator.as_str() {
         "=" => field == value,
         "!=" => field != value,
         _ => todo!("unhandled case"),
