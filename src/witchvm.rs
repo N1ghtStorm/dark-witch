@@ -85,7 +85,7 @@ impl WitchVM {
                 }
                 Instruction::UseStorage { name } => {
                     self.instruction_storage_name = Some(name);
-                },
+                }
                 _ => todo!(),
             }
         }
@@ -95,13 +95,30 @@ impl WitchVM {
 }
 
 pub enum Instruction {
-    UseStorage { name: String },
-    FullScan { key: String, search_operator: SearchOperator },
-    Get { key: String },
-    Set { key: String, value: String },
-    Delete { key: String },
-    Print { key: String },
-    GetJsonField { key: String, field: String },
+    UseStorage {
+        name: String,
+    },
+    FullScan {
+        key: String,
+        search_operator: SearchOperator,
+    },
+    Get {
+        key: String,
+    },
+    Set {
+        key: String,
+        value: String,
+    },
+    Delete {
+        key: String,
+    },
+    Print {
+        key: String,
+    },
+    GetJsonField {
+        key: String,
+        field: String,
+    },
     Clear,
 }
 

@@ -28,11 +28,7 @@ fn main() {
         Ok(_) => println!("Execution successful"),
         Err(e) => println!("Execution failed: {}", e),
     }
-
-
-
 }
-
 
 fn fill_database(database: &mut DatabaseInner) {
     if let Err(e) = database.create_storage("main".to_string()) {
@@ -40,19 +36,30 @@ fn fill_database(database: &mut DatabaseInner) {
         panic!("Failed to create storage");
     }
 
-    if let Err(e) = database.insert("main".to_string(), "person1".to_string(), "{\"name\": \"John\", \"age\": 30}".to_string()) {
+    if let Err(e) = database.insert(
+        "main".to_string(),
+        "person1".to_string(),
+        "{\"name\": \"John\", \"age\": 30}".to_string(),
+    ) {
         println!("Error inserting value: {}", e);
         panic!("Failed to insert value");
     }
 
-    if let Err(e) = database.insert("main".to_string(), "person2".to_string(), "{\"name\": \"Jane\", \"age\": 25}".to_string()) {
+    if let Err(e) = database.insert(
+        "main".to_string(),
+        "person2".to_string(),
+        "{\"name\": \"Jane\", \"age\": 25}".to_string(),
+    ) {
         println!("Error inserting value: {}", e);
         panic!("Failed to insert value");
     }
 
-    if let Err(e) = database.insert("main".to_string(), "person3".to_string(), "{\"name\": \"Jim\", \"age\": 40}".to_string()) {
+    if let Err(e) = database.insert(
+        "main".to_string(),
+        "person3".to_string(),
+        "{\"name\": \"Jim\", \"age\": 40}".to_string(),
+    ) {
         println!("Error inserting value: {}", e);
         panic!("Failed to insert value");
     }
-
 }
