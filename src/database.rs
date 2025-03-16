@@ -9,13 +9,12 @@ pub struct Storage {
 }
 
 pub struct DatabaseInner {
-    storage_num: u64,
     storages: Vec<Storage>,
 }
 
 impl DatabaseInner {
     pub fn new() -> Self {
-        Self { storage_num: 0, storages: Vec::new() }
+        Self { storages: Vec::new() }
     }
 
     pub fn create_storage(&mut self, name: String) -> Result<(), String> {
