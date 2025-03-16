@@ -33,7 +33,7 @@ fn main() {
     match vm.execute(&mut database, full_scan_instructions_1()) {
         Ok(_) => {
             println!("{:?}", vm.into_output());
-        },
+        }
         Err(e) => println!("Execution failed: {}", e),
     }
 
@@ -41,7 +41,7 @@ fn main() {
     match vm.execute(&mut database, full_scan_instructions_2()) {
         Ok(_) => {
             println!("{:?}", vm.into_output());
-        },
+        }
         Err(e) => println!("Execution failed: {}", e),
     }
 
@@ -49,7 +49,7 @@ fn main() {
     match vm.execute(&mut database, full_scan_instructions_all()) {
         Ok(_) => {
             println!("{:?}", vm.into_output());
-        },
+        }
         Err(e) => println!("Execution failed: {}", e),
     }
 }
@@ -95,9 +95,7 @@ fn full_scan_instructions_2() -> Vec<Instruction> {
 }
 
 fn full_scan_instructions_all() -> Vec<Instruction> {
-    let filter = Box::new(|_, _: String| {
-        true
-    });
+    let filter = Box::new(|_, _: String| true);
 
     vec![
         Instruction::UseStorage {
@@ -108,7 +106,6 @@ fn full_scan_instructions_all() -> Vec<Instruction> {
         },
     ]
 }
-
 
 fn fill_database(database: &mut DatabaseInner) {
     if let Err(e) = database.create_storage("main".to_string()) {
