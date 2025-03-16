@@ -1,5 +1,4 @@
 use crate::database::Database;
-use std::collections::HashMap;
 
 pub struct WitchVM {
     instruction_storage_name: Option<String>,
@@ -94,13 +93,14 @@ impl WitchVM {
     }
 }
 
+#[allow(dead_code)]
 pub enum Instruction {
     UseStorage {
         name: String,
     },
     FullScan {
         key: String,
-        search_operator: SearchOperator,
+        maybe_filter: Option<Filter>,
     },
     Get {
         key: String,
@@ -122,7 +122,8 @@ pub enum Instruction {
     Clear,
 }
 
-pub enum SearchOperator {
+#[allow(dead_code)]
+pub enum Filter {
     Equal,
     NotEqual,
     GreaterThan,
