@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use crate::database::Database;
 
-
 pub struct WitchVM {
     instruction_storage_name: Option<String>,
 }   

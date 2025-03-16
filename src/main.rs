@@ -2,7 +2,7 @@ mod witchvm;
 mod database;
 
 use std::collections::HashMap;
-use witchvm::{execute, Instruction};
+use witchvm::{WitchVM, Instruction};
 
 fn main() {
     let mut main_hashmap = HashMap::<String, String>::new();
@@ -29,7 +29,9 @@ fn main() {
         // },
     ];
 
-    match execute(&mut main_hashmap, instructions) {
+    let mut vm = WitchVM::new();
+
+    match vm.execute(&mut main_hashmap, instructions) {
         Ok(_) => println!("Execution successful"),
         Err(e) => println!("Execution failed: {}", e),
     }
