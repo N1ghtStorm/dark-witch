@@ -2,12 +2,14 @@ use crate::database::Database;
 
 pub struct WitchVM {
     instruction_storage_name: Option<String>,
+    output: Vec<String>,
 }
 
 impl WitchVM {
     pub fn new() -> Self {
         Self {
             instruction_storage_name: None,
+            output: Vec::new(),
         }
     }
 
@@ -84,7 +86,29 @@ impl WitchVM {
                 }
                 Instruction::UseStorage { name } => {
                     self.instruction_storage_name = Some(name);
-                }
+                },
+                Instruction::FullScan { maybe_filter } => {
+                    let Some(storage_name) = self.instruction_storage_name.clone() else {
+                        return Err("No storage name provided".to_string());
+                    };
+
+                    let storage = database.storages
+                        .iter()
+                        .find(|s| *s.name.lock().expect("Failed to lock storage").as_str() == storage_name)
+                        .ok_or(format!("Storage with name '{}' not found", storage_name))?;
+                    
+                    for (key, value) in storage.data.lock().expect("Failed to lock storage").iter() {
+                        if let Some(filter) = &maybe_filter {
+                            match filter {
+                                Filter::Condition(condition) => {
+                                    if condition(key.clone(), value.clone()) {
+                                        self.output.push(value.clone());
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
                 _ => todo!(),
             }
         }
@@ -98,8 +122,8 @@ pub enum Instruction {
     UseStorage {
         name: String,
     },
+    ClearOutput,
     FullScan {
-        key: String,
         maybe_filter: Option<Filter>,
     },
     Get {
@@ -124,8 +148,5 @@ pub enum Instruction {
 
 #[allow(dead_code)]
 pub enum Filter {
-    Equal,
-    NotEqual,
-    GreaterThan,
-    LessThan,
+    Condition(Box<dyn Fn(String, String) -> bool>),
 }

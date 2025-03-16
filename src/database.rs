@@ -7,12 +7,12 @@ use std::{
 pub type Database = DatabaseInner;
 
 pub struct Storage {
-    name: Arc<Mutex<String>>,
-    data: Arc<Mutex<HashMap<String, String>>>,
+    pub name: Arc<Mutex<String>>,
+    pub data: Arc<Mutex<HashMap<String, String>>>,
 }
 
 pub struct DatabaseInner {
-    storages: Vec<Storage>,
+    pub storages: Vec<Storage>,
 }
 
 impl DatabaseInner {
