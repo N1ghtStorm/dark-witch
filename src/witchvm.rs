@@ -86,18 +86,22 @@ impl WitchVM {
                 }
                 Instruction::UseStorage { name } => {
                     self.instruction_storage_name = Some(name);
-                },
+                }
                 Instruction::FullScan { maybe_filter } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
                         return Err("No storage name provided".to_string());
                     };
 
-                    let storage = database.storages
+                    let storage = database
+                        .storages
                         .iter()
-                        .find(|s| *s.name.lock().expect("Failed to lock storage").as_str() == storage_name)
+                        .find(|s| {
+                            *s.name.lock().expect("Failed to lock storage").as_str() == storage_name
+                        })
                         .ok_or(format!("Storage with name '{}' not found", storage_name))?;
-                    
-                    for (key, value) in storage.data.lock().expect("Failed to lock storage").iter() {
+
+                    for (key, value) in storage.data.lock().expect("Failed to lock storage").iter()
+                    {
                         if let Some(filter) = &maybe_filter {
                             match filter {
                                 Filter::Condition(condition) => {
@@ -108,7 +112,7 @@ impl WitchVM {
                             }
                         }
                     }
-                },
+                }
                 _ => todo!(),
             }
         }
@@ -119,30 +123,14 @@ impl WitchVM {
 
 #[allow(dead_code)]
 pub enum Instruction {
-    UseStorage {
-        name: String,
-    },
+    UseStorage { name: String },
     ClearOutput,
-    FullScan {
-        maybe_filter: Option<Filter>,
-    },
-    Get {
-        key: String,
-    },
-    Set {
-        key: String,
-        value: String,
-    },
-    Delete {
-        key: String,
-    },
-    Print {
-        key: String,
-    },
-    GetJsonField {
-        key: String,
-        field: String,
-    },
+    FullScan { maybe_filter: Option<Filter> },
+    Get { key: String },
+    Set { key: String, value: String },
+    Delete { key: String },
+    Print { key: String },
+    GetJsonField { key: String, field: String },
     Clear,
 }
 
