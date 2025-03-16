@@ -2,10 +2,9 @@ mod database;
 mod witchvm;
 
 use database::DatabaseInner;
-use witchvm::{Instruction, WitchVM};
+use witchvm::{Filter, Instruction, WitchVM};
 
 fn main() {
-    let mut vm = WitchVM::new();
     let mut database = DatabaseInner::new();
 
     fill_database(&mut database);
@@ -24,11 +23,61 @@ fn main() {
         },
     ];
 
+    let mut vm: WitchVM = WitchVM::new();
     match vm.execute(&mut database, instructions) {
         Ok(_) => println!("Execution successful"),
         Err(e) => println!("Execution failed: {}", e),
     }
+
+    let mut vm: WitchVM = WitchVM::new();
+    match vm.execute(&mut database, full_scan_instructions_1()) {
+        Ok(_) => {
+            println!("{:?}", vm.into_output());
+        },
+        Err(e) => println!("Execution failed: {}", e),
+    }
 }
+
+fn full_scan_instructions_1() -> Vec<Instruction> {
+    let filter = Box::new(|_, value: String| {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&value) {
+            if let Some(age) = json.get("age").and_then(|v| v.as_i64()) {
+                return age >= 30;
+            }
+        }
+        false
+    });
+
+    vec![
+        Instruction::UseStorage {
+            name: "main".to_string(),
+        },
+        Instruction::FullScan {
+            maybe_filter: Some(Filter::Condition(filter)),
+        },
+    ]
+}
+
+fn full_scan_instructions_2() -> Vec<Instruction> {
+    let filter = Box::new(|_, value: String| {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&value) {
+            if let Some(name) = json.get("name").and_then(|v| v.as_str()) {
+                return name.contains('J') && name.contains('e');
+            }
+        }
+        false
+    });
+
+    vec![
+        Instruction::UseStorage {
+            name: "main".to_string(),
+        },
+        Instruction::FullScan {
+            maybe_filter: Some(Filter::Condition(filter)),
+        },
+    ]
+}
+
 
 fn fill_database(database: &mut DatabaseInner) {
     if let Err(e) = database.create_storage("main".to_string()) {
@@ -58,6 +107,15 @@ fn fill_database(database: &mut DatabaseInner) {
         "main".to_string(),
         "person3".to_string(),
         "{\"name\": \"Jim\", \"age\": 40}".to_string(),
+    ) {
+        println!("Error inserting value: {}", e);
+        panic!("Failed to insert value");
+    }
+
+    if let Err(e) = database.insert(
+        "main".to_string(),
+        "person4".to_string(),
+        "{\"name\": \"Jopel\", \"age\": 29}".to_string(),
     ) {
         println!("Error inserting value: {}", e);
         panic!("Failed to insert value");

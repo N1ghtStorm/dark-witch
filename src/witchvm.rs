@@ -13,6 +13,10 @@ impl WitchVM {
         }
     }
 
+    pub fn into_output(self) -> Vec<String> {
+        self.output
+    }
+
     pub fn execute(
         &mut self,
         // hashmap: &mut HashMap<String, String>,
@@ -40,14 +44,14 @@ impl WitchVM {
                     }
                     println!("Set value for key '{}'", key);
                 }
-                Instruction::Delete { key } => {
+                Instruction::Delete { key: _ } => {
                     // if hashmap.remove(&key).is_none() {
                     //     return Err(format!("Key '{}' not found for deletion", key));
                     // }
                     // println!("Deleted key '{}'", key);
                     todo!()
                 }
-                Instruction::Print { key } => {
+                Instruction::Print { key: _ } => {
                     // match hashmap.get(&key) {
                     // Some(value) => println!("{}", value),
                     // None => return Err(format!("Key '{}' not found for printing", key)),
