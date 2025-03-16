@@ -422,13 +422,27 @@ impl CodeGenerator {
                         // self.emit(Instruction::PushColumn(col.clone()));
                         
                         // // Push literal value
+                        let col = col.clone();
                         match lit {
                             LiteralValue::Number(n) => {
                                 // todo!("unhandled case")
-                                Box::new(|_, value: String| {
+                                // let json_field = col.clone();
+
+
+                                Box::new(move |_, value: String| {
                                     if let Ok(json) = serde_json::from_str::<serde_json::Value>(&value) {
-                                        if let Some(age) = json.get("age").and_then(|v| v.as_i64()) {
-                                            return age >= 30;
+                                        if let Some(field) = json.get(col.as_str()).and_then(|v| v.as_i64()) {
+                                            // return field >= 30;
+                                            return cond(field, operator.clone(), n.clone() as i64);
+                                            // return match operator.as_str() {
+                                            //     // ">" => field > *n as i64,
+                                            //     // ">=" => field >= *n as i64,
+                                            //     // "<" => field < *n as i64,
+                                            //     // "<=" => field <= *n as i64,
+                                            //     // "=" => field == *n as i64,
+                                            //     // "!=" => field != *n as i64,
+                                            //     _ => todo!("unhandled case"),
+                                            // }
                                         }
                                     }
                                     false
@@ -502,3 +516,15 @@ impl CodeGenerator {
 // fn main() -> Result<(), String> {
 //     compile_sql_example("SELECT * FROM main WHERE age >= 30")
 // }
+
+fn cond(field: i64, operator: String, value: i64) -> bool {
+    match operator.as_str() {
+        ">" => field > value,
+        ">=" => field >= value,
+        "<" => field < value,
+        "<=" => field <= value,
+        "=" => field == value,
+        "!=" => field != value,
+        _ => todo!("unhandled case"),
+    }
+}
