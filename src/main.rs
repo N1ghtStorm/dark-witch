@@ -2,10 +2,19 @@ mod witchvm;
 mod database;
 
 use std::collections::HashMap;
+use std::sync::Arc;
+use database::{Database, DatabaseInner};
 use witchvm::{WitchVM, Instruction};
 
 fn main() {
-    let mut main_hashmap = HashMap::<String, String>::new();
+    let mut vm = WitchVM::new();
+    let mut database = DatabaseInner::new();
+
+    if let Err(e) = database.create_storage("main".to_string()) {
+        println!("Error creating storage: {}", e);
+        panic!("Failed to create storage");
+    }
+
 
     let instructions = vec![
         Instruction::Set {
@@ -23,15 +32,11 @@ fn main() {
             key: "person1".to_string(),
             field: "age".to_string(),
         },
-        // Instruction::Clear,
-        // Instruction::Print {
-        //     key: "name".to_string(),
-        // },
     ];
 
-    let mut vm = WitchVM::new();
 
-    match vm.execute(&mut main_hashmap, instructions) {
+
+    match vm.execute(&mut database, instructions) {
         Ok(_) => println!("Execution successful"),
         Err(e) => println!("Execution failed: {}", e),
     }
