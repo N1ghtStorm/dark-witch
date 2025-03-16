@@ -36,6 +36,22 @@ fn main() {
         },
         Err(e) => println!("Execution failed: {}", e),
     }
+
+    let mut vm: WitchVM = WitchVM::new();
+    match vm.execute(&mut database, full_scan_instructions_2()) {
+        Ok(_) => {
+            println!("{:?}", vm.into_output());
+        },
+        Err(e) => println!("Execution failed: {}", e),
+    }
+
+    let mut vm: WitchVM = WitchVM::new();
+    match vm.execute(&mut database, full_scan_instructions_all()) {
+        Ok(_) => {
+            println!("{:?}", vm.into_output());
+        },
+        Err(e) => println!("Execution failed: {}", e),
+    }
 }
 
 fn full_scan_instructions_1() -> Vec<Instruction> {
@@ -66,6 +82,21 @@ fn full_scan_instructions_2() -> Vec<Instruction> {
             }
         }
         false
+    });
+
+    vec![
+        Instruction::UseStorage {
+            name: "main".to_string(),
+        },
+        Instruction::FullScan {
+            maybe_filter: Some(Filter::Condition(filter)),
+        },
+    ]
+}
+
+fn full_scan_instructions_all() -> Vec<Instruction> {
+    let filter = Box::new(|_, _: String| {
+        true
     });
 
     vec![
