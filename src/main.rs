@@ -1,6 +1,28 @@
+// MIT License
+//
+// Copyright (c) 2025
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+
 mod database;
-mod witchvm;
 mod sql;
+mod witchvm;
 
 use database::DatabaseInner;
 use witchvm::{Filter, Instruction, WitchVM};
@@ -60,7 +82,6 @@ fn main() {
     //     Err(e) => println!("Execution failed: {}", e),
     // }
 
-
     // println!("--------------------------------");
 
     // let sql = "SELECT * FROM main WHERE age >= 30";
@@ -71,7 +92,6 @@ fn main() {
     // println!("{:?}", ast);
 
     // println!("--------------------------------");
-
 
     // let sql = "SELECT * FROM main WHERE name = \'John\'";
     // let mut lexer = sql::Lexer::new(sql);
@@ -88,14 +108,14 @@ fn main() {
     //     Err(e) => println!("Execution failed: {}", e),
     // }
 
-
     println!("--------------------------------");
 
-    let sql = "SELECT * FROM main WHERE name = \'Jim\'";
+    let sql = "SELECT * FROM main";
     let mut lexer = sql::Lexer::new(sql);
     let tokens = lexer.tokenize();
     let mut parser = sql::Parser::new(tokens);
     let ast = parser.parse();
+    println!("{:?}", ast);
     let mut generator = sql::CodeGenerator::new();
     generator.generate(&ast.unwrap());
     let mut vm: WitchVM = WitchVM::new();
@@ -199,6 +219,15 @@ fn fill_database(database: &mut DatabaseInner) {
         "main".to_string(),
         "person4".to_string(),
         "{\"name\": \"Jopel\", \"age\": 29}".to_string(),
+    ) {
+        println!("Error inserting value: {}", e);
+        panic!("Failed to insert value");
+    }
+
+    if let Err(e) = database.insert(
+        "main".to_string(),
+        "person4".to_string(),
+        "LALALALAL".to_string(),
     ) {
         println!("Error inserting value: {}", e);
         panic!("Failed to insert value");
