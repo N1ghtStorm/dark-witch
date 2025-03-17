@@ -52,6 +52,8 @@ pub enum Token {
     Select,
     From,
     Where,
+    And,
+    Or,
 
     // Symbols
     Asterisk,
@@ -207,6 +209,8 @@ impl Lexer {
                         "SELECT" => Token::Select,
                         "FROM" => Token::From,
                         "WHERE" => Token::Where,
+                        "AND" => Token::And,
+                        "OR" => Token::Or,
                         _ => Token::Identifier(identifier),
                     }
                 }
@@ -335,7 +339,33 @@ impl Parser {
     }
 
     fn parse_expression(&mut self) -> Result<AstNode, String> {
-        // Simplified expression parsing - would need more logic for complex expressions
+        let mut left = self.parse_comparison()?;
+
+        while let Some(token) = self.peek() {
+            match token {
+                Token::And | Token::Or => {
+                    let operator = match token {
+                        Token::And => "AND".to_string(),
+                        Token::Or => "OR".to_string(),
+                        _ => unreachable!(),
+                    };
+                    self.advance();
+                    let right = self.parse_comparison()?;
+                    left = AstNode::BinaryOp {
+                        left: Box::new(left),
+                        operator,
+                        right: Box::new(right),
+                    };
+                }
+                _ => break,
+            }
+        }
+
+        Ok(left)
+    }
+
+    // New method to handle basic comparisons
+    fn parse_comparison(&mut self) -> Result<AstNode, String> {
         let left = match self.peek() {
             Some(Token::Identifier(name)) => {
                 let name = name.clone();
@@ -366,7 +396,11 @@ impl Parser {
                 self.advance();
                 "=".to_string()
             }
-            _ => return Err("Expected comparison operator".to_string()),
+            Some(Token::NotEqual) => {
+                self.advance();
+                "!=".to_string()
+            }
+            val => return Err(format!("Expected comparison operator, got {:?}", val)),
         };
 
         let right = match self.peek() {
@@ -435,62 +469,74 @@ impl CodeGenerator {
         }
     }
 
-    fn generate_condition(
-        &mut self,
-        condition: &AstNode,
-    ) -> Box<dyn Fn(String, String) -> bool + 'static> {
+    fn generate_condition(&mut self, condition: &AstNode) -> Box<dyn Fn(String, String) -> bool + 'static> {
         match condition {
-            AstNode::BinaryOp {
-                left,
-                operator,
-                right,
-            } => {
-                match (&**left, &**right) {
-                    (AstNode::Column(col), AstNode::Literal(lit)) => {
-                        let col = col.clone();
-                        match lit {
-                            LiteralValue::Number(n) => {
-                                let operator = operator.clone();
-                                let n = n.clone();
-                                Box::new(move |_, value: String| {
-                                    if let Ok(json) =
-                                        serde_json::from_str::<serde_json::Value>(&value)
-                                    {
-                                        if let Some(field) =
-                                            json.get(col.as_str()).and_then(|v| v.as_i64())
-                                        {
-                                            return num_cond(field, operator.clone(), n as i64);
-                                        }
+            AstNode::BinaryOp { left, operator, right } => {
+                match operator.as_str() {
+                    "AND" => {
+                        let left_pred = self.generate_condition(left);
+                        let right_pred = self.generate_condition(right);
+                        Box::new(move |key: String, value: String| {
+                            left_pred(key.clone(), value.clone()) && right_pred(key, value)
+                        })
+                    }
+                    "OR" => {
+                        let left_pred = self.generate_condition(left);
+                        let right_pred = self.generate_condition(right);
+                        Box::new(move |key: String, value: String| {
+                            left_pred(key.clone(), value.clone()) || right_pred(key, value)
+                        })
+                    }
+                    _ => {
+                        // Handle comparison operators as before
+                        match (&**left, &**right) {
+                            (AstNode::Column(col), AstNode::Literal(lit)) => {
+                                let col = col.clone();
+                                match lit {
+                                    LiteralValue::Number(n) => {
+                                        let operator = operator.clone();
+                                        let n = n.clone();
+                                        Box::new(move |_, value: String| {
+                                            if let Ok(json) =
+                                                serde_json::from_str::<serde_json::Value>(&value)
+                                            {
+                                                if let Some(field) =
+                                                    json.get(col.as_str()).and_then(|v| v.as_i64())
+                                                {
+                                                    return num_cond(field, operator.clone(), n as i64);
+                                                }
+                                            }
+                                            false
+                                        })
                                     }
-                                    false
-                                })
-                            }
-                            LiteralValue::String(s) => {
-                                let operator = operator.clone();
-                                let s = s.clone();
-                                Box::new(move |_, value: String| {
-                                    if let Ok(json) =
-                                        serde_json::from_str::<serde_json::Value>(&value)
-                                    {
-                                        if let Some(name) =
-                                            json.get("name").and_then(|v| v.as_str())
-                                        {
-                                            return str_cond(
-                                                name.to_string(),
-                                                operator.clone(),
-                                                s.clone(),
-                                            );
-                                        }
+                                    LiteralValue::String(s) => {
+                                        let operator = operator.clone();
+                                        let s = s.clone();
+                                        Box::new(move |_, value: String| {
+                                            if let Ok(json) =
+                                                serde_json::from_str::<serde_json::Value>(&value)
+                                            {
+                                                if let Some(name) =
+                                                    json.get("name").and_then(|v| v.as_str())
+                                                {
+                                                    return str_cond(
+                                                        name.to_string(),
+                                                        operator.clone(),
+                                                        s.clone(),
+                                                    );
+                                                }
+                                            }
+                                            false
+                                        })
                                     }
-                                    false
-                                })
+                                }
                             }
+                            _ => Box::new(|_, _| false),
                         }
                     }
-                    _ => todo!("unhandled case"), // Handle more complex expressions here
                 }
             }
-            _ => todo!("unhandled case"), // Other condition types would be handled here
+            _ => Box::new(|_, _| false),
         }
     }
 }

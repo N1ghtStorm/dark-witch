@@ -133,7 +133,7 @@ fn main() {
 
     println!("--------------------------------");
 
-    let sql = "SELECT * FROM main";
+    let sql = "SELECT * FROM main WHERE name != 'John' AND age >= 10";
     let mut lexer = sql::Lexer::new(sql);
     let tokens = lexer.tokenize();
     let mut parser = sql::Parser::new(tokens);
@@ -214,7 +214,7 @@ fn fill_database(database: &mut DatabaseInner) {
     if let Err(e) = database.insert(
         "main".to_string(),
         "person1".to_string(),
-        "{\"name\": \"John\", \"age\": 30}".to_string(),
+        "{\"name\": \"John\", \"age\": 30, \"sex\": \"male\"}".to_string(),
     ) {
         println!("Error inserting value: {}", e);
         panic!("Failed to insert value");
