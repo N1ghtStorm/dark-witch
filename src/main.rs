@@ -46,14 +46,21 @@
 mod database;
 mod sql;
 mod witchvm;
+mod server;
+
+#[cfg(feature = "local")]
+mod local_data;
 
 use database::DatabaseInner;
 use witchvm::{Filter, Instruction, WitchVM};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let mut database = DatabaseInner::new();
 
-    fill_database(&mut database);
+    #[cfg(feature = "local")]
+    local_data::fill_database(&mut database);
+
 
     // let instructions = vec![
     //     Instruction::UseStorage {
@@ -131,25 +138,27 @@ fn main() {
     //     Err(e) => println!("Execution failed: {}", e),
     // }
 
-    println!("--------------------------------");
+    // println!("--------------------------------");
 
-    let sql = "SELECT * FROM main WHERE name = 'John' AND age >= 10 AND sex = 'male'";
-    let mut lexer = sql::Lexer::new(sql);
-    let tokens = lexer.tokenize();
-    let mut parser = sql::Parser::new(tokens);
-    let ast = parser.parse();
-    println!("{:?}", ast);
-    let mut generator = sql::CodeGenerator::new();
-    generator.generate(&ast.unwrap());
-    let mut vm: WitchVM = WitchVM::new();
-    match vm.execute(&mut database, generator.instructions) {
-        Ok(_) => {
-            println!("{:?}", vm.into_output());
-        }
-        Err(e) => println!("Execution failed: {}", e),
-    }
+    // let sql = "SELECT * FROM main WHERE name = 'John' AND age >= 10 AND sex = 'male'";
+    // let mut lexer = sql::Lexer::new(sql);
+    // let tokens = lexer.tokenize();
+    // let mut parser = sql::Parser::new(tokens);
+    // let ast = parser.parse();
+    // println!("{:?}", ast);
+    // let mut generator = sql::CodeGenerator::new();
+    // generator.generate(&ast.unwrap());
+    // let mut vm: WitchVM = WitchVM::new();
+    // match vm.execute(&mut database, generator.instructions) {
+    //     Ok(_) => {
+    //         println!("{:?}", vm.into_output());
+    //     }
+    //     Err(e) => println!("Execution failed: {}", e),
+    // }
 
     // println!("{:?}", generator.instructions);
+
+    server::run_witch_server().await;
 }
 
 fn full_scan_instructions_1() -> Vec<Instruction> {
@@ -205,54 +214,4 @@ fn full_scan_instructions_all() -> Vec<Instruction> {
     ]
 }
 
-fn fill_database(database: &mut DatabaseInner) {
-    if let Err(e) = database.create_storage("main".to_string()) {
-        println!("Error creating storage: {}", e);
-        panic!("Failed to create storage");
-    }
 
-    if let Err(e) = database.insert(
-        "main".to_string(),
-        "person1".to_string(),
-        "{\"name\": \"John\", \"age\": 30, \"sex\": \"male\"}".to_string(),
-    ) {
-        println!("Error inserting value: {}", e);
-        panic!("Failed to insert value");
-    }
-
-    if let Err(e) = database.insert(
-        "main".to_string(),
-        "person2".to_string(),
-        "{\"name\": \"Jane\", \"age\": 25}".to_string(),
-    ) {
-        println!("Error inserting value: {}", e);
-        panic!("Failed to insert value");
-    }
-
-    if let Err(e) = database.insert(
-        "main".to_string(),
-        "person3".to_string(),
-        "{\"name\": \"Jim\", \"age\": 40}".to_string(),
-    ) {
-        println!("Error inserting value: {}", e);
-        panic!("Failed to insert value");
-    }
-
-    if let Err(e) = database.insert(
-        "main".to_string(),
-        "person4".to_string(),
-        "{\"name\": \"Jopel\", \"age\": 29}".to_string(),
-    ) {
-        println!("Error inserting value: {}", e);
-        panic!("Failed to insert value");
-    }
-
-    if let Err(e) = database.insert(
-        "main".to_string(),
-        "person4".to_string(),
-        "LALALALAL".to_string(),
-    ) {
-        println!("Error inserting value: {}", e);
-        panic!("Failed to insert value");
-    }
-}
