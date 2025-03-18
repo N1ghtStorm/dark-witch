@@ -45,10 +45,9 @@
 
 use std::sync::Arc;
 use tokio::sync::Mutex;
-
 use axum::{extract::State, routing::get, Router};
-
-use crate::{database::Database, sql, witchvm::WitchVM};
+use crate::database::Database;
+use crate::query_handler::handle_query;
 
 pub async fn run_witch_server() {
     greet();
@@ -64,7 +63,6 @@ pub async fn run_witch_server() {
     let app = Router::new()
         .route("/", get(|| async { pentagram() }))
         .route("/sql", get(handle_sql_request))
-        .route("/temp_select", get(handle_pre_created_request))
         .with_state(database);
 
     // run our app with hyper, listening globally on port 3000
@@ -75,24 +73,7 @@ pub async fn run_witch_server() {
 }
 
 async fn handle_sql_request(State(database): State<Arc<Mutex<Database>>>, sql: String) -> String {
-    let mut database = database.lock().await;
-
-    let mut lexer = sql::Lexer::new(&sql);
-    let tokens = lexer.tokenize();
-    let mut parser = sql::Parser::new(tokens);
-    let ast = parser.parse();
-    println!("{:?}", ast);
-    let mut generator = sql::CodeGenerator::new();
-    generator.generate(&ast.unwrap());
-    let mut vm: WitchVM = WitchVM::new();
-    match vm.execute(&mut database, generator.instructions) {
-        Ok(_) => vm.into_output().join(","),
-        Err(e) => panic!("Execution failed: {}", e),
-    }
-}
-
-async fn handle_pre_created_request(State(database): State<Arc<Mutex<Database>>>) -> String {
-    handle_sql_request(State(database), "SELECT * FROM main".to_string()).await
+    handle_query(database, sql).await
 }
 
 fn greet() {

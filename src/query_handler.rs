@@ -43,60 +43,26 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
-use crate::database::Database;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database>> {
-    if let Err(e) = database.lock().await.create_storage("main".to_string()) {
-        println!("Error creating storage: {}", e);
-        panic!("Failed to create storage");
-    }
+use crate::database::Database;
+use crate::sql;
+use crate::witchvm::WitchVM;
 
-    if let Err(e) = database.lock().await.insert(
-        "main".to_string(),
-        "person1".to_string(),
-        "{\"name\": \"John\", \"age\": 30, \"sex\": \"male\"}".to_string(),
-    ) {
-        println!("Error inserting value: {}", e);
-        panic!("Failed to insert value");
-    }
+pub async fn handle_query(database: Arc<Mutex<Database>>, query: String) -> String {
+    let mut database = database.lock().await;
 
-    if let Err(e) = database.lock().await.insert(
-        "main".to_string(),
-        "person2".to_string(),
-        "{\"name\": \"Jane\", \"age\": 25}".to_string(),
-    ) {
-        println!("Error inserting value: {}", e);
-        panic!("Failed to insert value");
+    let mut lexer = sql::Lexer::new(&query);
+    let tokens = lexer.tokenize();
+    let mut parser = sql::Parser::new(tokens);
+    let ast = parser.parse();
+    println!("{:?}", ast);
+    let mut generator = sql::CodeGenerator::new();
+    generator.generate(&ast.unwrap());
+    let mut vm: WitchVM = WitchVM::new();
+    match vm.execute(&mut database, generator.instructions) {
+        Ok(_) => vm.into_output().join(","),
+        Err(e) => panic!("Execution failed: {}", e),
     }
-
-    if let Err(e) = database.lock().await.insert(
-        "main".to_string(),
-        "person3".to_string(),
-        "{\"name\": \"Jim\", \"age\": 40}".to_string(),
-    ) {
-        println!("Error inserting value: {}", e);
-        panic!("Failed to insert value");
-    }
-
-    if let Err(e) = database.lock().await.insert(
-        "main".to_string(),
-        "person4".to_string(),
-        "{\"name\": \"Jopel\", \"age\": 29}".to_string(),
-    ) {
-        println!("Error inserting value: {}", e);
-        panic!("Failed to insert value");
-    }
-
-    if let Err(e) = database.lock().await.insert(
-        "main".to_string(),
-        "person4".to_string(),
-        "LALALALAL".to_string(),
-    ) {
-        println!("Error inserting value: {}", e);
-        panic!("Failed to insert value");
-    }
-
-    database
 }

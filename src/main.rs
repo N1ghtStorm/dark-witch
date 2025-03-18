@@ -47,6 +47,7 @@ mod database;
 mod server;
 mod sql;
 mod witchvm;
+mod query_handler;
 
 #[cfg(feature = "local")]
 mod local_data;
