@@ -63,7 +63,6 @@ pub enum Token {
     Equal,
     Not,
 
-
     // Composed tokens
     GreaterThanEqual,
     LessThanEqual,
@@ -198,7 +197,7 @@ impl Lexer {
                 '=' => {
                     self.advance();
                     Token::Equal
-                },
+                }
                 '!' => {
                     self.advance();
                     if self.peek() == Some('=') {
@@ -207,7 +206,7 @@ impl Lexer {
                     } else {
                         Token::Not
                     }
-                },
+                }
                 '0'..='9' => {
                     let value = self.read_number();
                     Token::Number(value)
@@ -482,9 +481,16 @@ impl CodeGenerator {
         }
     }
 
-    fn generate_condition(&mut self, condition: &AstNode) -> Box<dyn Fn(String, String) -> bool + 'static> {
+    fn generate_condition(
+        &mut self,
+        condition: &AstNode,
+    ) -> Box<dyn Fn(String, String) -> bool + 'static> {
         match condition {
-            AstNode::BinaryOp { left, operator, right } => {
+            AstNode::BinaryOp {
+                left,
+                operator,
+                right,
+            } => {
                 match operator.as_str() {
                     "AND" => {
                         let left_pred = self.generate_condition(left);
@@ -516,7 +522,11 @@ impl CodeGenerator {
                                                 if let Some(field) =
                                                     json.get(col.as_str()).and_then(|v| v.as_i64())
                                                 {
-                                                    return num_cond(field, operator.clone(), n as i64);
+                                                    return num_cond(
+                                                        field,
+                                                        operator.clone(),
+                                                        n as i64,
+                                                    );
                                                 }
                                             }
                                             false

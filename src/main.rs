@@ -44,121 +44,14 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 mod database;
+mod server;
 mod sql;
 mod witchvm;
-mod server;
 
 #[cfg(feature = "local")]
 mod local_data;
 
-use database::Database;
-use witchvm::{Filter, Instruction, WitchVM};
-
 #[tokio::main]
 async fn main() {
-    let mut database = Database::new();
-
-    #[cfg(feature = "local")]
-    {
-        database = local_data::fill_database(database);
-    }
-
-    server::run_witch_server(database).await;
-
-
-    // let instructions = vec![
-    //     Instruction::UseStorage {
-    //         name: "main".to_string(),
-    //     },
-    //     Instruction::GetJsonField {
-    //         key: "person1".to_string(),
-    //         field: "name".to_string(),
-    //     },
-    //     Instruction::GetJsonField {
-    //         key: "person1".to_string(),
-    //         field: "age".to_string(),
-    //     },
-    // ];
-
-    // println!("--------------------------------");
-
-    // let mut vm: WitchVM = WitchVM::new();
-    // match vm.execute(&mut database, instructions) {
-    //     Ok(_) => println!("Execution successful"),
-    //     Err(e) => println!("Execution failed: {}", e),
-    // }
-
-    // let mut vm: WitchVM = WitchVM::new();
-    // match vm.execute(&mut database, full_scan_instructions_1()) {
-    //     Ok(_) => {
-    //         println!("{:?}", vm.into_output());
-    //     }
-    //     Err(e) => println!("Execution failed: {}", e),
-    // }
-
-    // println!("--------------------------------");
-
-    // let mut vm: WitchVM = WitchVM::new();
-    // match vm.execute(&mut database, full_scan_instructions_2()) {
-    //     Ok(_) => {
-    //         println!("{:?}", vm.into_output());
-    //     }
-    //     Err(e) => println!("Execution failed: {}", e),
-    // }
-
-    // println!("--------------------------------");
-
-    // let mut vm: WitchVM = WitchVM::new();
-    // match vm.execute(&mut database, full_scan_instructions_all()) {
-    //     Ok(_) => {
-    //         println!("{:?}", vm.into_output());
-    //     }
-    //     Err(e) => println!("Execution failed: {}", e),
-    // }
-
-    // println!("--------------------------------");
-
-    // let sql = "SELECT * FROM main WHERE age >= 30";
-    // let mut lexer = sql::Lexer::new(sql);
-    // let tokens = lexer.tokenize();
-    // let mut parser = sql::Parser::new(tokens);
-    // let ast = parser.parse();
-    // println!("{:?}", ast);
-
-    // println!("--------------------------------");
-
-    // let sql = "SELECT * FROM main WHERE name = \'John\'";
-    // let mut lexer = sql::Lexer::new(sql);
-    // let tokens = lexer.tokenize();
-    // let mut parser = sql::Parser::new(tokens);
-    // let ast = parser.parse();
-    // let mut generator = sql::CodeGenerator::new();
-    // generator.generate(&ast.unwrap());
-    // let mut vm: WitchVM = WitchVM::new();
-    // match vm.execute(&mut database, generator.instructions) {
-    //     Ok(_) => {
-    //         println!("{:?}", vm.into_output());
-    //     }
-    //     Err(e) => println!("Execution failed: {}", e),
-    // }
-
-    // println!("--------------------------------");
-
-    // let sql = "SELECT * FROM main WHERE name = 'John' AND age >= 10 AND sex = 'male'";
-    // let mut lexer = sql::Lexer::new(sql);
-    // let tokens = lexer.tokenize();
-    // let mut parser = sql::Parser::new(tokens);
-    // let ast = parser.parse();
-    // println!("{:?}", ast);
-    // let mut generator = sql::CodeGenerator::new();
-    // generator.generate(&ast.unwrap());
-    // let mut vm: WitchVM = WitchVM::new();
-    // match vm.execute(&mut database, generator.instructions) {
-    //     Ok(_) => {
-    //         println!("{:?}", vm.into_output());
-    //     }
-    //     Err(e) => println!("Execution failed: {}", e),
-    // }
-
-    // println!("{:?}", generator.instructions);
+    server::run_witch_server().await;
 }

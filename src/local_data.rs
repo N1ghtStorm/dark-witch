@@ -44,15 +44,16 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 use crate::database::Database;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
-
-pub fn fill_database(mut database: Database) -> Database {
-    if let Err(e) = database.create_storage("main".to_string()) {
+pub async fn fill_database(mut database: Arc<Mutex<Database>>) -> Arc<Mutex<Database>> {
+    if let Err(e) = database.lock().await.create_storage("main".to_string()) {
         println!("Error creating storage: {}", e);
         panic!("Failed to create storage");
     }
 
-    if let Err(e) = database.insert(
+    if let Err(e) = database.lock().await.insert(
         "main".to_string(),
         "person1".to_string(),
         "{\"name\": \"John\", \"age\": 30, \"sex\": \"male\"}".to_string(),
@@ -61,7 +62,7 @@ pub fn fill_database(mut database: Database) -> Database {
         panic!("Failed to insert value");
     }
 
-    if let Err(e) = database.insert(
+    if let Err(e) = database.lock().await.insert(
         "main".to_string(),
         "person2".to_string(),
         "{\"name\": \"Jane\", \"age\": 25}".to_string(),
@@ -70,7 +71,7 @@ pub fn fill_database(mut database: Database) -> Database {
         panic!("Failed to insert value");
     }
 
-    if let Err(e) = database.insert(
+    if let Err(e) = database.lock().await.insert(
         "main".to_string(),
         "person3".to_string(),
         "{\"name\": \"Jim\", \"age\": 40}".to_string(),
@@ -79,7 +80,7 @@ pub fn fill_database(mut database: Database) -> Database {
         panic!("Failed to insert value");
     }
 
-    if let Err(e) = database.insert(
+    if let Err(e) = database.lock().await.insert(
         "main".to_string(),
         "person4".to_string(),
         "{\"name\": \"Jopel\", \"age\": 29}".to_string(),
@@ -88,7 +89,7 @@ pub fn fill_database(mut database: Database) -> Database {
         panic!("Failed to insert value");
     }
 
-    if let Err(e) = database.insert(
+    if let Err(e) = database.lock().await.insert(
         "main".to_string(),
         "person4".to_string(),
         "LALALALAL".to_string(),

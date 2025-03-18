@@ -62,11 +62,7 @@ impl Database {
     }
 
     pub fn create_storage(&mut self, name: String) -> Result<(), String> {
-        if self
-            .storages
-            .iter()
-            .any(|s| s.name.as_str() == name)
-        {
+        if self.storages.iter().any(|s| s.name.as_str() == name) {
             return Err(format!("Storage with name '{}' already exists", name));
         }
         self.storages.push(Storage {
@@ -76,16 +72,19 @@ impl Database {
         Ok(())
     }
 
-    pub fn insert(&mut self, storage_name: String, key: String, value: String) -> Result<(), String> {
+    pub fn insert(
+        &mut self,
+        storage_name: String,
+        key: String,
+        value: String,
+    ) -> Result<(), String> {
         let storage = self
             .storages
             .iter_mut()
             .find(|s| s.name.as_str() == storage_name)
             .ok_or(format!("Storage with name '{}' not found", storage_name))?;
-        
-        storage
-            .data
-            .insert(key, value);
+
+        storage.data.insert(key, value);
         Ok(())
     }
 

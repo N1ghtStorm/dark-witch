@@ -125,13 +125,10 @@ impl WitchVM {
                     let storage = database
                         .storages
                         .iter()
-                        .find(|s| {
-                            s.name.as_str() == storage_name
-                        })
+                        .find(|s| s.name.as_str() == storage_name)
                         .ok_or(format!("Storage with name '{}' not found", storage_name))?;
 
-                    for (key, value) in storage.data.iter()
-                    {
+                    for (key, value) in storage.data.iter() {
                         if let Some(filter) = &maybe_filter {
                             match filter {
                                 Filter::Condition(condition) => {

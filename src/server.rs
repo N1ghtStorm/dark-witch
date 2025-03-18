@@ -44,39 +44,63 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 use std::sync::Arc;
-use std::sync::Mutex;
+use tokio::sync::Mutex;
 
-use axum::{
-    routing::get,
-    Router,
-    extract::State,
-};
+use axum::{extract::State, routing::get, Router};
 
-use crate::database::Database;
+use crate::{database::Database, sql, witchvm::WitchVM};
 
-pub async fn run_witch_server(database: Database) {
+pub async fn run_witch_server() {
     greet();
     println!("Running 🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙 server on localhost:3000");
 
-    let database = Arc::new(Mutex::new(database));
+    let database = Arc::new(Mutex::new(Database::new()));
+
+    #[cfg(feature = "local")]
+    {
+        crate::local_data::fill_database(database.clone()).await;
+    }
     // build our application with a single route
     let app = Router::new()
-        .route("/", get(|| async { greet() }))
+        .route("/", get(|| async { pentagram() }))
         .route("/sql", get(handle_sql_request))
+        .route("/temp_select", get(handle_pre_created_request))
         .with_state(database);
 
     // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("localhost:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("localhost:3000")
+        .await
+        .unwrap();
     axum::serve(listener, app).await.unwrap();
 }
 
 async fn handle_sql_request(State(database): State<Arc<Mutex<Database>>>, sql: String) -> String {
-    "".to_string()
+    let mut database = database.lock().await;
+
+    let mut lexer = sql::Lexer::new(&sql);
+    let tokens = lexer.tokenize();
+    let mut parser = sql::Parser::new(tokens);
+    let ast = parser.parse();
+    println!("{:?}", ast);
+    let mut generator = sql::CodeGenerator::new();
+    generator.generate(&ast.unwrap());
+    let mut vm: WitchVM = WitchVM::new();
+    match vm.execute(&mut database, generator.instructions) {
+        Ok(_) => vm.into_output().join(","),
+        Err(e) => panic!("Execution failed: {}", e),
+    }
 }
 
+async fn handle_pre_created_request(State(database): State<Arc<Mutex<Database>>>) -> String {
+    handle_sql_request(State(database), "SELECT * FROM main".to_string()).await
+}
 
 fn greet() {
-    println!("
+    println!("{}", pentagram());
+}
+
+fn pentagram() -> &'static str {
+    "
     MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
     MMMMMMMMMMMMds+:--------:+sdNMMMMMMMMMMM
     MMMMMMMMms:-+sdNMMMMMMMMNdy+--omMMMMMMMM
@@ -99,5 +123,5 @@ fn greet() {
     MMMMMMMMNs:./shmMMh  yMMNds/.:smMMMMMMMM
     MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
     MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-    ");
+    "
 }
