@@ -60,6 +60,9 @@ pub struct DatabaseInner {
     pub storages: Vec<Storage>,
 }
 
+unsafe impl Send for DatabaseInner {}
+unsafe impl Sync for DatabaseInner {}
+
 impl DatabaseInner {
     pub fn new() -> Self {
         Self {

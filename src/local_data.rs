@@ -46,7 +46,7 @@
 use crate::database::DatabaseInner;
 
 
-pub fn fill_database(database: &mut DatabaseInner) {
+pub fn fill_database(mut database: DatabaseInner) -> DatabaseInner {
     if let Err(e) = database.create_storage("main".to_string()) {
         println!("Error creating storage: {}", e);
         panic!("Failed to create storage");
@@ -96,4 +96,6 @@ pub fn fill_database(database: &mut DatabaseInner) {
         println!("Error inserting value: {}", e);
         panic!("Failed to insert value");
     }
+
+    database
 }

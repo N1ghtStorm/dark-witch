@@ -59,7 +59,11 @@ async fn main() {
     let mut database = DatabaseInner::new();
 
     #[cfg(feature = "local")]
-    local_data::fill_database(&mut database);
+    {
+        database = local_data::fill_database(database);
+    }
+
+    server::run_witch_server(database).await;
 
 
     // let instructions = vec![
@@ -157,61 +161,4 @@ async fn main() {
     // }
 
     // println!("{:?}", generator.instructions);
-
-    server::run_witch_server().await;
 }
-
-fn full_scan_instructions_1() -> Vec<Instruction> {
-    let filter = Box::new(|_, value: String| {
-        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&value) {
-            if let Some(age) = json.get("age").and_then(|v| v.as_i64()) {
-                return age >= 30;
-            }
-        }
-        false
-    });
-
-    vec![
-        Instruction::UseStorage {
-            name: "main".to_string(),
-        },
-        Instruction::FullScan {
-            maybe_filter: Some(Filter::Condition(filter)),
-        },
-    ]
-}
-
-fn full_scan_instructions_2() -> Vec<Instruction> {
-    let filter = Box::new(|_, value: String| {
-        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&value) {
-            if let Some(name) = json.get("name").and_then(|v| v.as_str()) {
-                return name.contains('J') && name.contains('e');
-            }
-        }
-        false
-    });
-
-    vec![
-        Instruction::UseStorage {
-            name: "main".to_string(),
-        },
-        Instruction::FullScan {
-            maybe_filter: Some(Filter::Condition(filter)),
-        },
-    ]
-}
-
-fn full_scan_instructions_all() -> Vec<Instruction> {
-    let filter = Box::new(|_, _: String| true);
-
-    vec![
-        Instruction::UseStorage {
-            name: "main".to_string(),
-        },
-        Instruction::FullScan {
-            maybe_filter: Some(Filter::Condition(filter)),
-        },
-    ]
-}
-
-

@@ -43,17 +43,61 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
+use std::sync::Arc;
+use std::sync::Mutex;
+
 use axum::{
     routing::get,
     Router,
+    extract::State,
 };
-use tokio::net::TcpListener;
 
-pub async fn run_witch_server() {
+use crate::database::DatabaseInner;
+
+pub async fn run_witch_server(database: DatabaseInner) {
+    greet();
+    println!("Running 🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙 server on localhost:3000");
+
+    let database = Arc::new(Mutex::new(database));
     // build our application with a single route
-    let app = Router::new().route("/", get(|| async { "Hello, World!" }));
+    let app = Router::new()
+        .route("/", get(|| async { greet() }))
+        .route("/sql", get(handle_sql_request))
+        .with_state(database);
 
     // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("localhost:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
+}
+
+async fn handle_sql_request(State(database): State<Arc<Mutex<DatabaseInner>>>, sql: String) -> String {
+    "".to_string()
+}
+
+
+fn greet() {
+    println!("
+    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+    MMMMMMMMMMMMds+:--------:+sdNMMMMMMMMMMM
+    MMMMMMMMms:-+sdNMMMMMMMMNdy+--omMMMMMMMM
+    MMMMMMh:` /mMMMMMMMMMMMMMMMMm+ `-yMMMMMM
+    MMMMd--hN``--sNMMMMMMMMMMNy:..`md:.hMMMM
+    MMM+`yMMMy hd+./hMMMMMMh/.+dd sMMMh`/MMM
+    MM:.mMMMMM:.NMMh/.+dd+./hMMM--MMMMMm--NM
+    M+`mMMMMMMN`+MMMMm-  .dMMMMo mMMMMMMN.:M
+    d yMMMMMMMMy dNy:.omNs--sNm oMMMMMMMMh h
+    /`MMMMMMMMMM.`.+dMMMMMMm+.``NMMMMMMMMM-:
+    .:MMMMMMMd+./`oMMMMMMMMMMs /.+dMMMMMMM/`
+    .:MMMMmo.:yNMs dMMMMMMMMm`oMNy:.omMMMM/`
+    /`MNy:.omMMMMM--MMMMMMMM:.MMMMMNs--sNM.:
+    d -` :++++++++: /++++++/ :++++++++:  : h
+    M+ yddddddddddd+ yddddy /dddddddddddy`/M
+    MM/.mMMMMMMMMMMM.-MMMM/.NMMMMMMMMMMm.:NM
+    MMMo`sMMMMMMMMMMd sMMy hMMMMMMMMMMy`+MMM
+    MMMMd--hMMMMMMMMM+`mN`/MMMMMMMMMh--hMMMM
+    MMMMMMh:.omMMMMMMN.:/`NMMMMMMms.:hMMMMMM
+    MMMMMMMMNs:./shmMMh  yMMNds/.:smMMMMMMMM
+    MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
+    MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
+    ");
 }
