@@ -23,7 +23,7 @@
     MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
     MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
-In memory key value database that Supports SQL Queries
+In memory key value database that supports SQL Queries
 
 ## Getting Started
 
@@ -39,7 +39,7 @@ curl -X GET http://localhost:3000/sql -H "Content-Type: text/plain" -d "SELECT *
 
 ## SQL
 
-Support simple SELECT statements
+Supports simple SELECT statements
 
 ```sql
 SELECT * from main;
