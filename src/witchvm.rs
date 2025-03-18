@@ -88,19 +88,6 @@ impl WitchVM {
                     }
                     println!("Set value for key '{}'", key);
                 }
-                Instruction::Delete { key: _ } => {
-                    // if hashmap.remove(&key).is_none() {
-                    //     return Err(format!("Key '{}' not found for deletion", key));
-                    // }
-                    // println!("Deleted key '{}'", key);
-                    todo!()
-                }
-                Instruction::Print { key: _ } => {
-                    // match hashmap.get(&key) {
-                    // Some(value) => println!("{}", value),
-                    // None => return Err(format!("Key '{}' not found for printing", key)),
-                    // }
-                }
                 Instruction::GetJsonField { key, field } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
                         return Err("No storage name provided".to_string());
@@ -126,11 +113,6 @@ impl WitchVM {
                         },
                         Err(_) => return Err(format!("Key '{}' not found", key)),
                     }
-                }
-                Instruction::Clear => {
-                    // hashmap.clear();
-                    // println!("Cleared all entries");
-                    todo!()
                 }
                 Instruction::UseStorage { name } => {
                     self.instruction_storage_name = Some(name);
