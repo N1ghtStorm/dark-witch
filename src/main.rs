@@ -133,7 +133,7 @@ fn main() {
 
     println!("--------------------------------");
 
-    let sql = "SELECT * FROM main WHERE name != 'John' AND age >= 10";
+    let sql = "SELECT * FROM main WHERE name = 'John' AND age >= 10 AND sex = 'male'";
     let mut lexer = sql::Lexer::new(sql);
     let tokens = lexer.tokenize();
     let mut parser = sql::Parser::new(tokens);

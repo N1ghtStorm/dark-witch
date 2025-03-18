@@ -59,10 +59,14 @@ pub enum Token {
     Asterisk,
     Comma,
     GreaterThan,
-    GreaterThanEqual,
     LessThan,
-    LessThanEqual,
     Equal,
+    Not,
+
+
+    // Composed tokens
+    GreaterThanEqual,
+    LessThanEqual,
     NotEqual,
 
     // Literals
@@ -194,7 +198,16 @@ impl Lexer {
                 '=' => {
                     self.advance();
                     Token::Equal
-                }
+                },
+                '!' => {
+                    self.advance();
+                    if self.peek() == Some('=') {
+                        self.advance();
+                        Token::NotEqual
+                    } else {
+                        Token::Not
+                    }
+                },
                 '0'..='9' => {
                     let value = self.read_number();
                     Token::Number(value)

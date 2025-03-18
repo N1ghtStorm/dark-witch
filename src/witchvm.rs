@@ -64,7 +64,6 @@ impl WitchVM {
 
     pub fn execute(
         &mut self,
-        // hashmap: &mut HashMap<String, String>,
         database: &mut Database,
         instructions: Vec<Instruction>,
     ) -> Result<(), String> {
