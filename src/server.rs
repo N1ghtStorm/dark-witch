@@ -52,9 +52,9 @@ use axum::{
     extract::State,
 };
 
-use crate::database::DatabaseInner;
+use crate::database::Database;
 
-pub async fn run_witch_server(database: DatabaseInner) {
+pub async fn run_witch_server(database: Database) {
     greet();
     println!("Running 🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙🧙 server on localhost:3000");
 
@@ -70,7 +70,7 @@ pub async fn run_witch_server(database: DatabaseInner) {
     axum::serve(listener, app).await.unwrap();
 }
 
-async fn handle_sql_request(State(database): State<Arc<Mutex<DatabaseInner>>>, sql: String) -> String {
+async fn handle_sql_request(State(database): State<Arc<Mutex<Database>>>, sql: String) -> String {
     "".to_string()
 }
 

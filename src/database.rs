@@ -43,27 +43,18 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
-
-// pub type Database = Arc<DatabaseInner>;
-pub type Database = DatabaseInner;
+use std::collections::HashMap;
 
 pub struct Storage {
-    pub name: Arc<Mutex<String>>,
-    pub data: Arc<Mutex<HashMap<String, String>>>,
+    pub name: String,
+    pub data: HashMap<String, String>,
 }
 
-pub struct DatabaseInner {
+pub struct Database {
     pub storages: Vec<Storage>,
 }
 
-unsafe impl Send for DatabaseInner {}
-unsafe impl Sync for DatabaseInner {}
-
-impl DatabaseInner {
+impl Database {
     pub fn new() -> Self {
         Self {
             storages: Vec::new(),
@@ -74,27 +65,26 @@ impl DatabaseInner {
         if self
             .storages
             .iter()
-            .any(|s| *s.name.lock().expect("Failed to lock storage").as_str() == name)
+            .any(|s| s.name.as_str() == name)
         {
             return Err(format!("Storage with name '{}' already exists", name));
         }
         self.storages.push(Storage {
-            name: Arc::new(Mutex::new(name)),
-            data: Arc::new(Mutex::new(HashMap::new())),
+            name,
+            data: HashMap::new(),
         });
         Ok(())
     }
 
-    pub fn insert(&self, storage_name: String, key: String, value: String) -> Result<(), String> {
+    pub fn insert(&mut self, storage_name: String, key: String, value: String) -> Result<(), String> {
         let storage = self
             .storages
-            .iter()
-            .find(|s| *s.name.lock().expect("Failed to lock storage").as_str() == storage_name)
+            .iter_mut()
+            .find(|s| s.name.as_str() == storage_name)
             .ok_or(format!("Storage with name '{}' not found", storage_name))?;
+        
         storage
             .data
-            .lock()
-            .expect("Failed to lock storage")
             .insert(key, value);
         Ok(())
     }
@@ -103,14 +93,12 @@ impl DatabaseInner {
         let storage = self
             .storages
             .iter()
-            .find(|s| *s.name.lock().expect("Failed to lock storage").as_str() == storage_name)
+            .find(|s| s.name.as_str() == storage_name)
             .ok_or(format!("Storage with name '{}' not found", storage_name))?;
 
         // TODO: remove clone
         let value = storage
             .data
-            .lock()
-            .expect("Failed to lock storage")
             .get(&key)
             .ok_or(format!(
                 "Key '{}' not found in storage '{}'",

@@ -51,12 +51,12 @@ mod server;
 #[cfg(feature = "local")]
 mod local_data;
 
-use database::DatabaseInner;
+use database::Database;
 use witchvm::{Filter, Instruction, WitchVM};
 
 #[tokio::main]
 async fn main() {
-    let mut database = DatabaseInner::new();
+    let mut database = Database::new();
 
     #[cfg(feature = "local")]
     {

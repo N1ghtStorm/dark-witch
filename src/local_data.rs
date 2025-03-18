@@ -43,10 +43,10 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
-use crate::database::DatabaseInner;
+use crate::database::Database;
 
 
-pub fn fill_database(mut database: DatabaseInner) -> DatabaseInner {
+pub fn fill_database(mut database: Database) -> Database {
     if let Err(e) = database.create_storage("main".to_string()) {
         println!("Error creating storage: {}", e);
         panic!("Failed to create storage");

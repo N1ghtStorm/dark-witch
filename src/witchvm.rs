@@ -126,11 +126,11 @@ impl WitchVM {
                         .storages
                         .iter()
                         .find(|s| {
-                            *s.name.lock().expect("Failed to lock storage").as_str() == storage_name
+                            s.name.as_str() == storage_name
                         })
                         .ok_or(format!("Storage with name '{}' not found", storage_name))?;
 
-                    for (key, value) in storage.data.lock().expect("Failed to lock storage").iter()
+                    for (key, value) in storage.data.iter()
                     {
                         if let Some(filter) = &maybe_filter {
                             match filter {
