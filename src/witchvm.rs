@@ -161,7 +161,6 @@ pub enum Instruction {
     Clear,
 }
 
-#[allow(dead_code)]
 pub enum Filter {
     Condition(Box<dyn Fn(String, String) -> bool>),
 }

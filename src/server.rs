@@ -45,9 +45,9 @@
 
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use axum::{extract::State, routing::get, Router};
+use axum::{extract::State, routing::get, Router, http::StatusCode};
 use crate::database::Database;
-use crate::query_handler::handle_query;
+use crate::query_handler::{handle_query, QueryResult};
 
 pub async fn run_witch_server() {
     greet();
@@ -65,15 +65,27 @@ pub async fn run_witch_server() {
         .route("/sql", get(handle_sql_request))
         .with_state(database);
 
-    // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("localhost:3000")
-        .await
-        .unwrap();
-    axum::serve(listener, app).await.unwrap();
+    // run our app
+    let listener = match tokio::net::TcpListener::bind("localhost:3000")
+        .await {
+            Ok(listener) => listener,
+            Err(e) => {
+                println!("Failed to bind to port 3000: {}", e);
+                return;
+            }
+        };
+
+    match axum::serve(listener, app).await {
+        Ok(_) => {},
+        Err(e) => println!("Server failed to start: {}", e),
+    }
 }
 
-async fn handle_sql_request(State(database): State<Arc<Mutex<Database>>>, sql: String) -> String {
-    handle_query(database, sql).await
+async fn handle_sql_request(State(database): State<Arc<Mutex<Database>>>, sql: String) -> Result<String, StatusCode> {
+    match handle_query(database, sql).await {
+        QueryResult::Ok(result) => Ok(result),
+        QueryResult::Err() => Err(StatusCode::BAD_REQUEST),
+    }
 }
 
 fn greet() {
