@@ -139,9 +139,13 @@ impl WitchVM {
                             }
                         }
                     }
-                },
+                }
                 Instruction::MapOutput { map_fn } => {
-                    self.output = self.output.iter().map(|value| map_fn(value.clone())).collect();
+                    self.output = self
+                        .output
+                        .iter()
+                        .map(|value| map_fn(value.clone()))
+                        .collect();
                 }
                 _ => todo!(),
             }
@@ -153,15 +157,33 @@ impl WitchVM {
 
 #[allow(dead_code)]
 pub enum Instruction {
-    UseStorage { name: String },
+    UseStorage {
+        name: String,
+    },
     ClearOutput,
-    FullScan { maybe_filter: Option<Filter> },
-    MapOutput { map_fn: Box<dyn Fn(String) -> String> },
-    Get { key: String },
-    Set { key: String, value: String },
-    Delete { key: String },
-    Print { key: String },
-    GetJsonField { key: String, field: String },
+    FullScan {
+        maybe_filter: Option<Filter>,
+    },
+    MapOutput {
+        map_fn: Box<dyn Fn(String) -> String>,
+    },
+    Get {
+        key: String,
+    },
+    Set {
+        key: String,
+        value: String,
+    },
+    Delete {
+        key: String,
+    },
+    Print {
+        key: String,
+    },
+    GetJsonField {
+        key: String,
+        field: String,
+    },
     Clear,
 }
 

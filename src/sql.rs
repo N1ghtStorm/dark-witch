@@ -254,7 +254,7 @@ impl Lexer {
 #[derive(Debug)]
 pub enum AstNode {
     Select {
-        columns: Vec<ColumnExpression>,
+        fields: Vec<FieldExpression>,
         from: String,
         where_clause: Option<Box<AstNode>>,
     },
@@ -268,9 +268,9 @@ pub enum AstNode {
 }
 
 #[derive(Debug)]
-enum ColumnExpression {
+enum FieldExpression {
     AllColumns,
-    Column(String),
+    Field(String),
 }
 
 #[derive(Debug)]
@@ -313,14 +313,19 @@ impl Parser {
         self.expect(Token::Select)?;
 
         // Parse columns
-        let mut columns = Vec::new();
+        let mut fields = Vec::new();
 
         if self.peek() == Some(&Token::Asterisk) {
-            columns.push(ColumnExpression::AllColumns);
+            fields.push(FieldExpression::AllColumns);
             self.advance();
         } else {
-            // Handle column list parsing - simplified for now
-            columns.push(ColumnExpression::Column("column".to_string()));
+            match self.peek() {
+                Some(Token::Identifier(name)) => {
+                    fields.push(FieldExpression::Field(name.clone()));
+                    self.advance();
+                }
+                _ => return Err("Expected identifier in SELECT".to_string()),
+            }
         }
 
         // Parse FROM clause
@@ -344,7 +349,7 @@ impl Parser {
         };
 
         Ok(AstNode::Select {
-            columns,
+            fields,
             from: table_name,
             where_clause,
         })
@@ -460,7 +465,7 @@ impl CodeGenerator {
     pub fn generate(&mut self, ast: &AstNode) {
         match ast {
             AstNode::Select {
-                columns,
+                fields,
                 from,
                 where_clause,
             } => {
@@ -581,5 +586,29 @@ fn str_cond(field: String, operator: String, value: String) -> bool {
         "=" => field == value,
         "!=" => field != value,
         _ => todo!("unhandled case"),
+    }
+}
+
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lexer() {
+        let mut lexer = Lexer::new("SELECT age,name FROM users WHERE age > 30");
+        let tokens = lexer.tokenize();
+        // assert_eq!(tokens, vec![
+        //     Token::Select,
+        //     Token::Asterisk,
+        //     Token::From,
+        //     Token::Identifier("users".to_string()),
+        //     Token::Where,
+        //     Token::Identifier("age".to_string()),
+        //     Token::GreaterThan,
+        //     Token::Number(30.0),
+        //     Token::Eof,
+        // ]);
+        let mut parser = Parser::new(tokens);
+        let ast = parser.parse().unwrap();
+        println!("{:?}", ast);
     }
 }
