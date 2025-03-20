@@ -44,7 +44,11 @@ Supports simple SELECT statements
 ```sql
 SELECT * from main;
 ```
-or
+
 ```sql
 SELECT * FROM main WHERE name = 'John' AND age < 30;
+```
+
+```sql
+SELECT name, age FROM main WHERE name = 'John' AND age < 30;
 ```
