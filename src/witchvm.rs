@@ -139,6 +139,9 @@ impl WitchVM {
                             }
                         }
                     }
+                },
+                Instruction::MapOutput { map_fn } => {
+                    self.output = self.output.iter().map(|value| map_fn(value.clone())).collect();
                 }
                 _ => todo!(),
             }
@@ -153,6 +156,7 @@ pub enum Instruction {
     UseStorage { name: String },
     ClearOutput,
     FullScan { maybe_filter: Option<Filter> },
+    MapOutput { map_fn: Box<dyn Fn(String) -> String> },
     Get { key: String },
     Set { key: String, value: String },
     Delete { key: String },
