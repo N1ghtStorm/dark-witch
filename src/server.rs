@@ -87,21 +87,14 @@ pub async fn run_witch_server() {
     }
 }
 
-// async fn handle_sql_request(
-//     State(database): State<Arc<Mutex<Database>>>,
-//     Json(request): Json<SQLRequest>,
-// ) -> Result<String, StatusCode> {
-//     match handle_query(database, request.sql).await {
-//         QueryResult::Ok(result) => Ok(result),
-//         QueryResult::Err() => Err(StatusCode::BAD_REQUEST),
-//     }
-// }
-
 async fn handle_sql_request(
     State(database): State<Arc<Mutex<Database>>>,
-    request: String,
+    Json(request): Json<SQLRequest>,
 ) -> Result<String, StatusCode> {
-    match handle_query(database, request).await {
+    println!("{:?}", request);
+    println!("{:?}", request.sql);
+    
+    match handle_query(database, request.sql).await {
         QueryResult::Ok(result) => Ok(result),
         QueryResult::Err() => Err(StatusCode::BAD_REQUEST),
     }

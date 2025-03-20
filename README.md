@@ -52,3 +52,13 @@ SELECT * FROM main WHERE name = 'John' AND age < 30;
 ```sql
 SELECT name, age FROM main WHERE name = 'John' AND age < 30;
 ```
+
+## Sending Request to local server
+
+```bash
+curl -X GET 'http://localhost:3000/sql' \
+-H 'Content-Type: application/json' \
+-d '{
+    "sql": "SELECT * FROM main WHERE name = '\''Jane'\''"
+}'
+```

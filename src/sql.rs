@@ -252,6 +252,7 @@ impl Lexer {
 
 // Parser: Constructs AST from tokens
 #[derive(Debug)]
+#[allow(private_interfaces)]
 pub enum AstNode {
     Select {
         fields: Vec<FieldExpression>,
