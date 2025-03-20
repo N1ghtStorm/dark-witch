@@ -319,12 +319,25 @@ impl Parser {
             fields.push(FieldExpression::AllColumns);
             self.advance();
         } else {
+            // Parse first field
             match self.peek() {
                 Some(Token::Identifier(name)) => {
                     fields.push(FieldExpression::Field(name.clone()));
                     self.advance();
                 }
                 _ => return Err("Expected identifier in SELECT".to_string()),
+            }
+
+            // Parse additional fields after commas
+            while self.peek() == Some(&Token::Comma) {
+                self.advance(); // consume comma
+                match self.peek() {
+                    Some(Token::Identifier(name)) => {
+                        fields.push(FieldExpression::Field(name.clone()));
+                        self.advance();
+                    }
+                    _ => return Err("Expected identifier after comma".to_string()),
+                }
             }
         }
 
@@ -462,7 +475,7 @@ impl CodeGenerator {
         self.instructions.push(instruction);
     }
 
-    pub fn generate(&mut self, ast: &AstNode) {
+    pub fn generate(&mut self, ast: &AstNode) -> Result<(), String> {
         match ast {
             AstNode::Select {
                 fields,
@@ -481,8 +494,60 @@ impl CodeGenerator {
                 self.emit(Instruction::FullScan {
                     maybe_filter: Some(crate::witchvm::Filter::Condition(predicate)),
                 });
+
+                if fields.len() == 1 {
+                    match &fields[0] {
+                        FieldExpression::AllColumns => {}
+                        FieldExpression::Field(name) => {
+                            let name = name.clone();
+                            let instruction = Instruction::MapOutput {
+                                map_fn: Box::new(move |json_string: String| {
+                                    // take Json field with name and return Json with only that field
+                                    let json: serde_json::Value =
+                                        match serde_json::from_str(&json_string) {
+                                            Ok(json) => json,
+                                            Err(e) => {
+                                                println!("Error parsing JSON: {}", e);
+                                                let new_json = serde_json::Map::new();
+                                                return serde_json::Value::Object(new_json)
+                                                    .to_string();
+                                            }
+                                        };
+
+                                    let Some(value) = json.get(&name) else {
+                                        let new_json = serde_json::Map::new();
+                                        return serde_json::Value::Object(new_json).to_string();
+                                    };
+
+                                    // create new json with only the value
+                                    let mut new_json = serde_json::Map::new();
+                                    new_json.insert(name.clone(), value.clone());
+                                    serde_json::Value::Object(new_json).to_string()
+
+                                    // let json: serde_json::Value = serde_json::from_str(&value).unwrap();
+                                    // json[name.as_str()].to_string()
+                                    // "".to_string()
+                                }),
+                            };
+                            self.emit(instruction);
+                        }
+                    }
+                } else if fields.len() > 1 {
+                    for field in fields {
+                        match field {
+                            FieldExpression::AllColumns => {
+                                return Err(
+                                    "Multiple fields not allowed in SELECT with *".to_string()
+                                )
+                            }
+                            FieldExpression::Field(name) => {}
+                        }
+                    }
+                }
+
+                Ok(())
             }
-            _ => {} // Other node types would be handled here
+            _ => Err("unhandled case".to_string()), // Other node types would be handled here
         }
     }
 
@@ -590,11 +655,12 @@ fn str_cond(field: String, operator: String, value: String) -> bool {
 }
 
 mod tests {
+    #[allow(unused_imports)]
     use super::*;
 
     #[test]
     fn test_lexer() {
-        let mut lexer = Lexer::new("SELECT age,name FROM users WHERE age > 30");
+        let mut lexer = Lexer::new("SELECT age, name FROM users WHERE age > 30");
         let tokens = lexer.tokenize();
         // assert_eq!(tokens, vec![
         //     Token::Select,
@@ -610,5 +676,14 @@ mod tests {
         let mut parser = Parser::new(tokens);
         let ast = parser.parse().unwrap();
         println!("{:?}", ast);
+
+        let mut generator = CodeGenerator::new();
+        generator.generate(&ast);
+
+        let a = generator.instructions;
+
+        println!("");
+
+        // println!("{:?}", generator);
     }
 }
