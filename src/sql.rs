@@ -507,7 +507,7 @@ impl CodeGenerator {
                         })
                     }
                     _ => {
-                        // Handle comparison operators 
+                        // Handle comparison operators
                         match (&**left, &**right) {
                             (AstNode::Column(col), AstNode::Literal(lit)) => {
                                 let col = col.clone();

@@ -87,7 +87,10 @@ impl Database {
         let value = storage
             .data
             .get(&key)
-            .ok_or(format!("Key '{}' not found in storage '{}'", key, storage_name))?
+            .ok_or(format!(
+                "Key '{}' not found in storage '{}'",
+                key, storage_name
+            ))?
             .clone();
         Ok(value)
     }
@@ -119,7 +122,12 @@ impl Database {
         Ok(())
     }
 
-    pub fn change(&mut self, storage_name: String, key: String, new_value: String) -> Result<(), String> {
+    pub fn change(
+        &mut self,
+        storage_name: String,
+        key: String,
+        new_value: String,
+    ) -> Result<(), String> {
         let storage = self
             .storages
             .iter_mut()
