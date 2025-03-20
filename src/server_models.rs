@@ -43,17 +43,39 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
-mod database;
-mod server;
-mod server_models;
-mod sql;
-mod witchvm;
-mod query_handler;
+use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "local")]
-mod local_data;
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateStorageRequest {
+    pub storage_name: String,
+}
 
-#[tokio::main]
-async fn main() {
-    server::run_witch_server().await;
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeleteStorageRequest {
+    pub storage_name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AddKeyValueRequest {
+    pub storage_name: String,
+    pub key: String,
+    pub value: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DeleteKeyValueRequest {
+    pub storage_name: String,
+    pub key: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChangeValueRequest {
+    pub storage_name: String,
+    pub key: String,
+    pub new_value: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SQLRequest {
+    pub sql: String,
 }

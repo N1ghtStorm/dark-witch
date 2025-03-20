@@ -72,6 +72,26 @@ impl Database {
         Ok(())
     }
 
+    pub fn delete_storage(&mut self, storage_name: String) -> Result<(), String> {
+        self.storages.retain(|s| s.name != storage_name);
+        Ok(())
+    }
+
+    pub fn get(&self, storage_name: String, key: String) -> Result<String, String> {
+        let storage = self
+            .storages
+            .iter()
+            .find(|s| s.name.as_str() == storage_name)
+            .ok_or(format!("Storage with name '{}' not found", storage_name))?;
+
+        let value = storage
+            .data
+            .get(&key)
+            .ok_or(format!("Key '{}' not found in storage '{}'", key, storage_name))?
+            .clone();
+        Ok(value)
+    }
+
     pub fn insert(
         &mut self,
         storage_name: String,
@@ -88,22 +108,25 @@ impl Database {
         Ok(())
     }
 
-    pub fn get(&self, storage_name: String, key: String) -> Result<String, String> {
+    pub fn delete(&mut self, storage_name: String, key: String) -> Result<(), String> {
         let storage = self
             .storages
-            .iter()
+            .iter_mut()
             .find(|s| s.name.as_str() == storage_name)
             .ok_or(format!("Storage with name '{}' not found", storage_name))?;
 
-        // TODO: remove clone
-        let value = storage
-            .data
-            .get(&key)
-            .ok_or(format!(
-                "Key '{}' not found in storage '{}'",
-                key, storage_name
-            ))?
-            .clone();
-        Ok(value)
+        storage.data.remove(&key);
+        Ok(())
+    }
+
+    pub fn change(&mut self, storage_name: String, key: String, new_value: String) -> Result<(), String> {
+        let storage = self
+            .storages
+            .iter_mut()
+            .find(|s| s.name.as_str() == storage_name)
+            .ok_or(format!("Storage with name '{}' not found", storage_name))?;
+
+        storage.data.insert(key, new_value);
+        Ok(())
     }
 }
