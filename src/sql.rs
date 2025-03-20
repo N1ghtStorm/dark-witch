@@ -267,7 +267,7 @@ pub enum AstNode {
     Literal(LiteralValue),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum FieldExpression {
     AllColumns,
     Field(String),
@@ -523,10 +523,6 @@ impl CodeGenerator {
                                     let mut new_json = serde_json::Map::new();
                                     new_json.insert(name.clone(), value.clone());
                                     serde_json::Value::Object(new_json).to_string()
-
-                                    // let json: serde_json::Value = serde_json::from_str(&value).unwrap();
-                                    // json[name.as_str()].to_string()
-                                    // "".to_string()
                                 }),
                             };
                             self.emit(instruction);
@@ -534,15 +530,57 @@ impl CodeGenerator {
                     }
                 } else if fields.len() > 1 {
                     for field in fields {
+                        // check if all fields are not "*"
                         match field {
                             FieldExpression::AllColumns => {
                                 return Err(
-                                    "Multiple fields not allowed in SELECT with *".to_string()
+                                    "Syntax error: Multiple fields not allowed in SELECT with *"
+                                        .to_string(),
                                 )
                             }
-                            FieldExpression::Field(name) => {}
+                            FieldExpression::Field(_) => {}
                         }
                     }
+
+                    let fields = fields.clone();
+                    let instruction = Instruction::MapOutput {
+                        map_fn: Box::new(move |json_string: String| {
+                            // take Json field with name and return Json with only that field
+                            let json: serde_json::Value = match serde_json::from_str(&json_string) {
+                                Ok(json) => json,
+                                Err(e) => {
+                                    println!("Error parsing JSON: {}", e);
+                                    let new_json = serde_json::Map::new();
+                                    return serde_json::Value::Object(new_json).to_string();
+                                }
+                            };
+
+                            let mut new_json = serde_json::Map::new();
+
+                            for field in fields.clone() {
+                                match field {
+                                    FieldExpression::AllColumns => {
+                                        // will never happen, but
+                                        let new_json = serde_json::Map::new();
+                                        return serde_json::Value::Object(new_json).to_string();
+                                    }
+                                    FieldExpression::Field(name) => {
+                                        let Some(value) = json.get(&name) else {
+                                            let new_json = serde_json::Map::new();
+                                            return serde_json::Value::Object(new_json).to_string();
+                                        };
+
+                                        new_json.insert(name.clone(), value.clone());
+                                    }
+                                }
+                            }
+
+                            serde_json::Value::Object(new_json).to_string()
+                        }),
+                    };
+                    self.emit(instruction);
+                } else {
+                    return Err("Syntax error: No fields in SELECT".to_string());
                 }
 
                 Ok(())
