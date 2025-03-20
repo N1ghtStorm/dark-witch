@@ -545,7 +545,6 @@ impl CodeGenerator {
                     let fields = fields.clone();
                     let instruction = Instruction::MapOutput {
                         map_fn: Box::new(move |json_string: String| {
-                            // take Json field with name and return Json with only that field
                             let json: serde_json::Value = match serde_json::from_str(&json_string) {
                                 Ok(json) => json,
                                 Err(e) => {
@@ -695,33 +694,4 @@ fn str_cond(field: String, operator: String, value: String) -> bool {
 mod tests {
     #[allow(unused_imports)]
     use super::*;
-
-    #[test]
-    fn test_lexer() {
-        let mut lexer = Lexer::new("SELECT age, name FROM users WHERE age > 30");
-        let tokens = lexer.tokenize();
-        // assert_eq!(tokens, vec![
-        //     Token::Select,
-        //     Token::Asterisk,
-        //     Token::From,
-        //     Token::Identifier("users".to_string()),
-        //     Token::Where,
-        //     Token::Identifier("age".to_string()),
-        //     Token::GreaterThan,
-        //     Token::Number(30.0),
-        //     Token::Eof,
-        // ]);
-        let mut parser = Parser::new(tokens);
-        let ast = parser.parse().unwrap();
-        println!("{:?}", ast);
-
-        let mut generator = CodeGenerator::new();
-        generator.generate(&ast);
-
-        let a = generator.instructions;
-
-        println!("");
-
-        // println!("{:?}", generator);
-    }
 }

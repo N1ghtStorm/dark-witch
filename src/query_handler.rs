@@ -68,7 +68,12 @@ pub async fn handle_query(database: Arc<Mutex<Database>>, query: String) -> Quer
         println!("{:?}", ast);
     }
     let mut generator = sql::CodeGenerator::new();
-    generator.generate(&ast.unwrap());
+    match generator.generate(&ast.unwrap()) {
+        Ok(_) => {}
+        Err(_) => {
+            return QueryResult::Err();
+        }
+    }
     let mut vm: WitchVM = WitchVM::new();
     match vm.execute(&mut database, generator.instructions) {
         Ok(_) => QueryResult::Ok(vm.into_output().join(",")),
