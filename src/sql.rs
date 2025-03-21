@@ -44,6 +44,7 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 use crate::witchvm::Instruction;
+use crate::error::Error;
 
 // Lexer: Converts raw SQL into tokens
 #[derive(Debug, Clone, PartialEq)]
@@ -301,16 +302,19 @@ impl Parser {
         self.position += 1;
     }
 
-    fn expect(&mut self, expected: Token) -> Result<(), String> {
+    fn expect(&mut self, expected: Token) -> Result<(), Error> {
         if self.peek() == Some(&expected) {
             self.advance();
             Ok(())
         } else {
-            Err(format!("Expected {:?}, got {:?}", expected, self.peek()))
+            Err(Error::SyntaxError(format!(
+                "Expected {:?}, got {:?}",
+                expected, self.peek()
+            )))
         }
     }
 
-    fn parse_select(&mut self) -> Result<AstNode, String> {
+    fn parse_select(&mut self) -> Result<AstNode, Error> {
         self.expect(Token::Select)?;
 
         // Parse columns
@@ -326,7 +330,7 @@ impl Parser {
                     fields.push(FieldExpression::Field(name.clone()));
                     self.advance();
                 }
-                _ => return Err("Expected identifier in SELECT".to_string()),
+                _ => return Err(Error::SyntaxError("Expected identifier in SELECT".to_string())),
             }
 
             // Parse additional fields after commas
@@ -337,7 +341,9 @@ impl Parser {
                         fields.push(FieldExpression::Field(name.clone()));
                         self.advance();
                     }
-                    _ => return Err("Expected identifier after comma".to_string()),
+                    _ => return Err(Error::SyntaxError(
+                        "Expected identifier after comma".to_string(),
+                    )),
                 }
             }
         }
@@ -350,7 +356,9 @@ impl Parser {
                 self.advance();
                 name
             }
-            _ => return Err("Expected table name after FROM".to_string()),
+            _ => return Err(Error::SyntaxError(
+                "Expected table name after FROM".to_string(),
+            )),
         };
 
         // Parse WHERE clause (if present)
@@ -369,7 +377,7 @@ impl Parser {
         })
     }
 
-    fn parse_expression(&mut self) -> Result<AstNode, String> {
+    fn parse_expression(&mut self) -> Result<AstNode, Error> {
         let mut left = self.parse_comparison()?;
 
         while let Some(token) = self.peek() {
@@ -396,14 +404,16 @@ impl Parser {
     }
 
     // New method to handle basic comparisons
-    fn parse_comparison(&mut self) -> Result<AstNode, String> {
+    fn parse_comparison(&mut self) -> Result<AstNode, Error> {
         let left = match self.peek() {
             Some(Token::Identifier(name)) => {
                 let name = name.clone();
                 self.advance();
                 AstNode::Column(name)
             }
-            _ => return Err("Expected identifier in WHERE clause".to_string()),
+            _ => return Err(Error::SyntaxError(
+                "Expected identifier in WHERE clause".to_string(),
+            )),
         };
 
         let operator = match self.peek() {
@@ -431,7 +441,10 @@ impl Parser {
                 self.advance();
                 "!=".to_string()
             }
-            val => return Err(format!("Expected comparison operator, got {:?}", val)),
+            val => return Err(Error::SyntaxError(format!(
+                "Expected comparison operator, got {:?}",
+                val
+            ))),
         };
 
         let right = match self.peek() {
@@ -445,7 +458,9 @@ impl Parser {
                 self.advance();
                 AstNode::Literal(LiteralValue::String(value))
             }
-            _ => return Err("Expected literal value after operator".to_string()),
+            _ => return Err(Error::SyntaxError(
+                "Expected literal value after operator".to_string(),
+            )),
         };
 
         Ok(AstNode::BinaryOp {
@@ -455,7 +470,7 @@ impl Parser {
         })
     }
 
-    pub fn parse(&mut self) -> Result<AstNode, String> {
+    pub fn parse(&mut self) -> Result<AstNode, Error> {
         self.parse_select()
     }
 }
@@ -476,7 +491,7 @@ impl CodeGenerator {
         self.instructions.push(instruction);
     }
 
-    pub fn generate(&mut self, ast: &AstNode) -> Result<(), String> {
+    pub fn generate(&mut self, ast: &AstNode) -> Result<(), Error> {
         match ast {
             AstNode::Select {
                 fields,
@@ -533,10 +548,10 @@ impl CodeGenerator {
                         // check if all fields are not "*"
                         match field {
                             FieldExpression::AllColumns => {
-                                return Err(
+                                return Err(Error::SyntaxError(
                                     "Syntax error: Multiple fields not allowed in SELECT with *"
                                         .to_string(),
-                                )
+                                ));
                             }
                             FieldExpression::Field(_) => {}
                         }
@@ -579,12 +594,14 @@ impl CodeGenerator {
                     };
                     self.emit(instruction);
                 } else {
-                    return Err("Syntax error: No fields in SELECT".to_string());
+                    return Err(Error::SyntaxError(
+                        "Syntax error: No fields in SELECT".to_string(),
+                    ));
                 }
 
                 Ok(())
             }
-            _ => Err("unhandled case".to_string()), // Other node types would be handled here
+            _ => Err(Error::SyntaxError("unhandled case".to_string())), // Other node types would be handled here
         }
     }
 
