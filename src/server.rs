@@ -93,7 +93,7 @@ async fn handle_sql_request(
 ) -> Result<String, StatusCode> {
     println!("{:?}", request);
     println!("{:?}", request.sql);
-    
+
     match handle_query(database, request.sql).await {
         QueryResult::Ok(result) => Ok(result),
         QueryResult::Err() => Err(StatusCode::BAD_REQUEST),

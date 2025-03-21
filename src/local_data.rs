@@ -101,11 +101,12 @@ pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database
     if let Err(e) = database.lock().await.insert(
         "main".to_string(),
         "person6".to_string(),
-        "{\"name\": \"Veronika\", \"age\": 35, \"gender\": \"female\", \"address\": \"Mashroom\"}".to_string(),
+        "{\"name\": \"Veronika\", \"age\": 35, \"gender\": \"female\", \"address\": \"Mashroom\"}"
+            .to_string(),
     ) {
         println!("Error inserting value: {}", e);
         panic!("Failed to insert value");
     }
-    
+
     database
 }

@@ -569,7 +569,6 @@ impl CodeGenerator {
                                             None => serde_json::Value::Null,
                                         };
 
-                                        // new_json.insert(name.clone(), value.clone());
                                         new_json.insert(name.clone(), value.clone());
                                     }
                                 }
@@ -647,8 +646,9 @@ impl CodeGenerator {
                                             if let Ok(json) =
                                                 serde_json::from_str::<serde_json::Value>(&value)
                                             {
-                                                if let Some(name) =
-                                                    json.get(col.clone().as_str()).and_then(|v| v.as_str())
+                                                if let Some(name) = json
+                                                    .get(col.clone().as_str())
+                                                    .and_then(|v| v.as_str())
                                                 {
                                                     return str_cond(
                                                         name.to_string(),
