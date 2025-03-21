@@ -66,10 +66,12 @@ pub async fn run_witch_server() {
         .route("/", get(|| async { pentagram() }))
         .route("/sql", get(handle_sql_request))
         .route("/create_storage", get(create_storage))
-        .route("/delete_storage", get(delete_storage))
+        .route("/delete_storage", delete(delete_storage))
+
         .route("/add_key_value", post(add_key_value))
         .route("/delete_key_value", delete(delete_key_value))
         .route("/change_value", put(change_value))
+        .route("/get_value", get(get_value))
         .with_state(database);
 
     // run our app
@@ -133,6 +135,16 @@ async fn add_key_value(
         .insert(request.storage_name, request.key, request.value)
     {
         Ok(_) => Ok("".to_string()),
+        Err(e) => Err((StatusCode::BAD_REQUEST, e.into_string())),
+    }
+}
+
+async fn get_value(
+    State(database): State<Arc<Mutex<Database>>>,
+    Json(request): Json<GetValueRequest>,
+) -> Result<String, (StatusCode, String)> {
+    match database.lock().await.get(request.storage_name, request.key) {
+        Ok(value) => Ok(value),
         Err(e) => Err((StatusCode::BAD_REQUEST, e.into_string())),
     }
 }

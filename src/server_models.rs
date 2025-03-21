@@ -63,6 +63,12 @@ pub struct AddKeyValueRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct GetValueRequest {
+    pub storage_name: String,
+    pub key: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct DeleteKeyValueRequest {
     pub storage_name: String,
     pub key: String,
