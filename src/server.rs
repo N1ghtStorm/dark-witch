@@ -46,6 +46,7 @@
 use crate::database::Database;
 use crate::query_handler::handle_query;
 use crate::server_models::*;
+use axum::http::response;
 use axum::routing::{delete, post, put};
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
 use std::sync::Arc;
@@ -90,13 +91,16 @@ pub async fn run_witch_server() {
 async fn handle_sql_request(
     State(database): State<Arc<Mutex<Database>>>,
     Json(request): Json<SQLRequest>,
-) -> Result<String, StatusCode> {
-    println!("{:?}", request);
-    println!("{:?}", request.sql);
-
+) -> Result<String, (StatusCode, String)> {
     match handle_query(database, request.sql).await {
         Ok(result) => Ok(result),
-        Err(_) => Err(StatusCode::BAD_REQUEST),
+        Err(e) => {
+            let err_response = match e.into_response_string() {
+                Ok(response) => response,
+                Err(e) => return Err((StatusCode::INTERNAL_SERVER_ERROR, e.into_string())),
+            };
+            Err((StatusCode::BAD_REQUEST, err_response))
+        },
     }
 }
 

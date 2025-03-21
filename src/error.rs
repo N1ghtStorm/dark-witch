@@ -55,3 +55,48 @@ pub enum Error {
     KeyNotFound(String),
     ExecutionError(String),
 }
+
+impl Error {
+    pub fn into_string(self) -> String {
+        match self {
+            Error::SyntaxError(s) => s,
+            Error::ParseError(s) => s,
+            Error::QueryError(s) => s,
+            Error::JsonError(s) => s,
+            Error::StorageError(s) => s,
+            Error::KeyNotFound(s) => s,
+            Error::ExecutionError(s) => s,
+        }
+    }
+
+    pub fn into_response_string(self) -> Result<String, Error> {
+        ErrorResponse::from(self).try_to_string()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ErrorResponse {
+    pub error: String,
+}
+
+impl ErrorResponse {
+    fn try_to_string(self) -> Result<String, Error> {
+        serde_json::to_string_pretty(&self).map_err(|x: serde_json::Error|Error::JsonError(x.to_string()))
+    }
+}
+
+impl From<Error> for ErrorResponse {
+    fn from(error: Error) -> Self {
+        ErrorResponse {
+            error: error.into_string(),
+        }
+    }
+}
+
+impl TryFrom<ErrorResponse> for String {
+    type Error = Error;
+
+    fn try_from(value: ErrorResponse) -> Result<Self, Self::Error> {
+        value.try_to_string()
+    }
+}
