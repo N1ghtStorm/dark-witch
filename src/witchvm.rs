@@ -109,15 +109,18 @@ impl WitchVM {
                                     )))
                                 }
                             },
-                            Err(_) => {
+                            Err(e) => {
                                 return Err(Error::ExecutionError(format!(
-                                    "Value for key '{}' is not valid JSON",
-                                    key
+                                    "Value for key '{}' is not valid JSON: {}",
+                                    key, e
                                 )))
                             }
                         },
-                        Err(_) => {
-                            return Err(Error::ExecutionError(format!("Key '{}' not found", key)))
+                        Err(e) => {
+                            return Err(Error::ExecutionError(format!(
+                                "Key '{}' not found: {:?}",
+                                key, e
+                            )))
                         }
                     }
                 }

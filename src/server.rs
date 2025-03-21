@@ -67,7 +67,6 @@ pub async fn run_witch_server() {
         .route("/sql", get(handle_sql_request))
         .route("/create_storage", get(create_storage))
         .route("/delete_storage", delete(delete_storage))
-
         .route("/add_key_value", post(add_key_value))
         .route("/delete_key_value", delete(delete_key_value))
         .route("/change_value", put(change_value))
