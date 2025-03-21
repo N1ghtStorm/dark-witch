@@ -44,7 +44,7 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 use crate::database::Database;
-use crate::query_handler::{handle_query, QueryResult};
+use crate::query_handler::handle_query;
 use crate::server_models::*;
 use axum::routing::{delete, post, put};
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
@@ -95,8 +95,8 @@ async fn handle_sql_request(
     println!("{:?}", request.sql);
 
     match handle_query(database, request.sql).await {
-        QueryResult::Ok(result) => Ok(result),
-        QueryResult::Err() => Err(StatusCode::BAD_REQUEST),
+        Ok(result) => Ok(result),
+        Err(_) => Err(StatusCode::BAD_REQUEST),
     }
 }
 

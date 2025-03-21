@@ -49,34 +49,21 @@ use tokio::sync::Mutex;
 use crate::database::Database;
 use crate::sql;
 use crate::witchvm::WitchVM;
+use crate::error::Error;
 
-#[derive(Debug)]
-pub enum QueryResult {
-    Ok(String),
-    // TODO: Add error type https://github.com/N1ghtStorm/dark-witch/issues/6
-    Err(),
-}
-
-pub async fn handle_query(database: Arc<Mutex<Database>>, query: String) -> QueryResult {
+pub async fn handle_query(database: Arc<Mutex<Database>>, query: String) -> Result<String, Error> {
     let mut database = database.lock().await;
     let mut lexer = sql::Lexer::new(&query);
     let tokens = lexer.tokenize();
     let mut parser = sql::Parser::new(tokens);
-    let ast = parser.parse();
+    let ast = parser.parse()?;
     #[cfg(feature = "local")]
     {
         println!("{:?}", ast);
     }
     let mut generator = sql::CodeGenerator::new();
-    match generator.generate(&ast.unwrap()) {
-        Ok(_) => {}
-        Err(_) => {
-            return QueryResult::Err();
-        }
-    }
+    generator.generate(&ast)?;
     let mut vm: WitchVM = WitchVM::new();
-    match vm.execute(&mut database, generator.instructions) {
-        Ok(_) => QueryResult::Ok(vm.into_output().join(",")),
-        Err(_) => QueryResult::Err(),
-    }
+    vm.execute(&mut database, generator.instructions)?;
+    Ok(vm.into_output().join(","))
 }

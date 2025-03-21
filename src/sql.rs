@@ -503,7 +503,7 @@ impl CodeGenerator {
 
                 // Handle WHERE clause if present
                 let predicate = match where_clause {
-                    Some(condition) => self.generate_condition(condition),
+                    Some(condition) => self.generate_condition(condition)?,
                     None => Box::new(|_: String, _: String| true),
                 };
 
@@ -608,7 +608,7 @@ impl CodeGenerator {
     fn generate_condition(
         &mut self,
         condition: &AstNode,
-    ) -> Box<dyn Fn(String, String) -> bool + 'static> {
+    ) -> Result<Box<dyn Fn(String, String) -> bool + 'static>, Error> {
         match condition {
             AstNode::BinaryOp {
                 left,
@@ -617,18 +617,18 @@ impl CodeGenerator {
             } => {
                 match operator.as_str() {
                     "AND" => {
-                        let left_pred = self.generate_condition(left);
-                        let right_pred = self.generate_condition(right);
-                        Box::new(move |key: String, value: String| {
+                        let left_pred = self.generate_condition(left)?;
+                        let right_pred = self.generate_condition(right)?;
+                        Ok(Box::new(move |key: String, value: String| {
                             left_pred(key.clone(), value.clone()) && right_pred(key, value)
-                        })
+                        }))
                     }
                     "OR" => {
-                        let left_pred = self.generate_condition(left);
-                        let right_pred = self.generate_condition(right);
-                        Box::new(move |key: String, value: String| {
+                        let left_pred = self.generate_condition(left)?;
+                        let right_pred = self.generate_condition(right)?;
+                        Ok(Box::new(move |key: String, value: String| {
                             left_pred(key.clone(), value.clone()) || right_pred(key, value)
-                        })
+                        }))
                     }
                     _ => {
                         // Handle comparison operators
@@ -639,7 +639,7 @@ impl CodeGenerator {
                                     LiteralValue::Number(n) => {
                                         let operator = operator.clone();
                                         let n = n.clone();
-                                        Box::new(move |_, value: String| {
+                                        Ok(Box::new(move |_, value: String| {
                                             if let Ok(json) =
                                                 serde_json::from_str::<serde_json::Value>(&value)
                                             {
@@ -654,12 +654,12 @@ impl CodeGenerator {
                                                 }
                                             }
                                             false
-                                        })
+                                        }))
                                     }
                                     LiteralValue::String(s) => {
                                         let operator = operator.clone();
                                         let s = s.clone();
-                                        Box::new(move |_, value: String| {
+                                        Ok(Box::new(move |_, value: String| {
                                             if let Ok(json) =
                                                 serde_json::from_str::<serde_json::Value>(&value)
                                             {
@@ -675,16 +675,16 @@ impl CodeGenerator {
                                                 }
                                             }
                                             false
-                                        })
+                                        }))
                                     }
                                 }
                             }
-                            _ => Box::new(|_, _| false),
+                            _ => Err(Error::SyntaxError("Unhandled Condition".to_string())),
                         }
                     }
                 }
             }
-            _ => Box::new(|_, _| false),
+            _ => Err(Error::SyntaxError("Unhandled Condition".to_string())),
         }
     }
 }
@@ -697,7 +697,7 @@ fn num_cond(field: i64, operator: String, value: i64) -> bool {
         "<=" => field <= value,
         "=" => field == value,
         "!=" => field != value,
-        _ => todo!("unhandled case"),
+        _ => false,
     }
 }
 
@@ -705,7 +705,7 @@ fn str_cond(field: String, operator: String, value: String) -> bool {
     match operator.as_str() {
         "=" => field == value,
         "!=" => field != value,
-        _ => todo!("unhandled case"),
+        _ => false,
     }
 }
 
