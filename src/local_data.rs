@@ -47,6 +47,7 @@ use crate::database::Database;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
+// Only for testing purposes, used in "local" feature. Will be removed in future.
 pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database>> {
     if let Err(e) = database.lock().await.create_storage("main".to_string()) {
         println!("Error creating storage: {:?}", e);
