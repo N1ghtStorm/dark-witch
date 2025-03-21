@@ -44,12 +44,12 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 mod database;
+mod error;
 mod query_handler;
 mod server;
 mod server_models;
 mod sql;
 mod witchvm;
-mod error;
 
 #[cfg(feature = "local")]
 mod local_data;

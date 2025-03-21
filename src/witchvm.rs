@@ -72,7 +72,9 @@ impl WitchVM {
             match instruction {
                 Instruction::Get { key } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
-                        return Err(Error::ExecutionError("No storage name provided".to_string()));
+                        return Err(Error::ExecutionError(
+                            "No storage name provided".to_string(),
+                        ));
                     };
 
                     let value = database.get(storage_name, key.clone())?;
@@ -80,13 +82,17 @@ impl WitchVM {
                 }
                 Instruction::Set { key, value } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
-                        return Err(Error::ExecutionError("No storage name provided".to_string()));
+                        return Err(Error::ExecutionError(
+                            "No storage name provided".to_string(),
+                        ));
                     };
                     database.insert(storage_name, key.clone(), value)?;
                 }
                 Instruction::GetJsonField { key, field } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
-                        return Err(Error::ExecutionError("No storage name provided".to_string()));
+                        return Err(Error::ExecutionError(
+                            "No storage name provided".to_string(),
+                        ));
                     };
 
                     match database.get(storage_name, key.clone()) {
@@ -110,10 +116,9 @@ impl WitchVM {
                                 )))
                             }
                         },
-                        Err(_) => return Err(Error::ExecutionError(format!(
-                            "Key '{}' not found",
-                            key
-                        ))),
+                        Err(_) => {
+                            return Err(Error::ExecutionError(format!("Key '{}' not found", key)))
+                        }
                     }
                 }
                 Instruction::UseStorage { name } => {
@@ -121,21 +126,21 @@ impl WitchVM {
                 }
                 Instruction::FullScan { filter } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
-                        return Err(Error::ExecutionError("No storage name provided".to_string()));
+                        return Err(Error::ExecutionError(
+                            "No storage name provided".to_string(),
+                        ));
                     };
 
                     let storage = database.get_storage(storage_name)?;
 
                     for (key, value) in storage.data.iter() {
-                        // if let Some(filter) = &maybe_filter {
-                            match filter {
-                                Filter::Condition(ref condition) => {
-                                    if condition(key.clone(), value.clone()) {
-                                        self.output.push(value.clone());
-                                    }
+                        match filter {
+                            Filter::Condition(ref condition) => {
+                                if condition(key.clone(), value.clone()) {
+                                    self.output.push(value.clone());
                                 }
                             }
-                        // }
+                        }
                     }
                 }
                 Instruction::MapOutput { map_fn } => {
