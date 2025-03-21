@@ -119,7 +119,7 @@ impl WitchVM {
                 Instruction::UseStorage { name } => {
                     self.instruction_storage_name = Some(name);
                 }
-                Instruction::FullScan { maybe_filter } => {
+                Instruction::FullScan { filter } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
                         return Err(Error::ExecutionError("No storage name provided".to_string()));
                     };
@@ -127,15 +127,15 @@ impl WitchVM {
                     let storage = database.get_storage(storage_name)?;
 
                     for (key, value) in storage.data.iter() {
-                        if let Some(filter) = &maybe_filter {
+                        // if let Some(filter) = &maybe_filter {
                             match filter {
-                                Filter::Condition(condition) => {
+                                Filter::Condition(ref condition) => {
                                     if condition(key.clone(), value.clone()) {
                                         self.output.push(value.clone());
                                     }
                                 }
                             }
-                        }
+                        // }
                     }
                 }
                 Instruction::MapOutput { map_fn } => {
@@ -160,7 +160,7 @@ pub enum Instruction {
     },
     ClearOutput,
     FullScan {
-        maybe_filter: Option<Filter>,
+        filter: Filter,
     },
     MapOutput {
         map_fn: Box<dyn Fn(String) -> String>,

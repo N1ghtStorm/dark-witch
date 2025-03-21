@@ -493,7 +493,7 @@ impl CodeGenerator {
                 };
 
                 self.emit(Instruction::FullScan {
-                    maybe_filter: Some(crate::witchvm::Filter::Condition(predicate)),
+                    filter: crate::witchvm::Filter::Condition(predicate),
                 });
 
                 if fields.len() == 1 {
