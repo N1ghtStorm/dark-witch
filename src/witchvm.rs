@@ -44,6 +44,7 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 use crate::database::Database;
+use crate::error::Error;
 
 pub struct WitchVM {
     instruction_storage_name: Option<String>,
@@ -66,31 +67,26 @@ impl WitchVM {
         &mut self,
         database: &mut Database,
         instructions: Vec<Instruction>,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         for instruction in instructions {
             match instruction {
                 Instruction::Get { key } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
-                        return Err("No storage name provided".to_string());
+                        return Err(Error::ExecutionError("No storage name provided".to_string()));
                     };
 
-                    match database.get(storage_name, key.clone()) {
-                        Ok(value) => println!("Value for key '{}': {}", key, value),
-                        Err(_) => return Err(format!("Key '{}' not found", key)),
-                    }
+                    let value = database.get(storage_name, key.clone())?;
+                    self.output.push(value);
                 }
                 Instruction::Set { key, value } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
-                        return Err("No storage name provided".to_string());
+                        return Err(Error::ExecutionError("No storage name provided".to_string()));
                     };
-                    if let Err(e) = database.insert(storage_name, key.clone(), value) {
-                        return Err(e);
-                    }
-                    println!("Set value for key '{}'", key);
+                    database.insert(storage_name, key.clone(), value)?;
                 }
                 Instruction::GetJsonField { key, field } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
-                        return Err("No storage name provided".to_string());
+                        return Err(Error::ExecutionError("No storage name provided".to_string()));
                     };
 
                     match database.get(storage_name, key.clone()) {
@@ -101,17 +97,23 @@ impl WitchVM {
                                     field, key, field_value
                                 ),
                                 None => {
-                                    return Err(format!(
+                                    return Err(Error::ExecutionError(format!(
                                         "JSON field '{}' not found in key '{}'",
                                         field, key
-                                    ))
+                                    )))
                                 }
                             },
                             Err(_) => {
-                                return Err(format!("Value for key '{}' is not valid JSON", key))
+                                return Err(Error::ExecutionError(format!(
+                                    "Value for key '{}' is not valid JSON",
+                                    key
+                                )))
                             }
                         },
-                        Err(_) => return Err(format!("Key '{}' not found", key)),
+                        Err(_) => return Err(Error::ExecutionError(format!(
+                            "Key '{}' not found",
+                            key
+                        ))),
                     }
                 }
                 Instruction::UseStorage { name } => {
@@ -119,14 +121,10 @@ impl WitchVM {
                 }
                 Instruction::FullScan { maybe_filter } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
-                        return Err("No storage name provided".to_string());
+                        return Err(Error::ExecutionError("No storage name provided".to_string()));
                     };
 
-                    let storage = database
-                        .storages
-                        .iter()
-                        .find(|s| s.name.as_str() == storage_name)
-                        .ok_or(format!("Storage with name '{}' not found", storage_name))?;
+                    let storage = database.get_storage(storage_name)?;
 
                     for (key, value) in storage.data.iter() {
                         if let Some(filter) = &maybe_filter {

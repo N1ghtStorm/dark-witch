@@ -43,18 +43,15 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
-mod database;
-mod query_handler;
-mod server;
-mod server_models;
-mod sql;
-mod witchvm;
-mod error;
+use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "local")]
-mod local_data;
-
-#[tokio::main]
-async fn main() {
-    server::run_witch_server().await;
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Error {
+    SyntaxError(String),
+    ParseError(String),
+    QueryError(String),
+    JsonError(String),
+    StorageError(String),
+    KeyNotFound(String),
+    ExecutionError(String),
 }

@@ -44,6 +44,7 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 use std::collections::HashMap;
+use crate::error::Error;
 
 pub struct Storage {
     pub name: String,
@@ -61,9 +62,9 @@ impl Database {
         }
     }
 
-    pub fn create_storage(&mut self, name: String) -> Result<(), String> {
+    pub fn create_storage(&mut self, name: String) -> Result<(), Error> {
         if self.storages.iter().any(|s| s.name.as_str() == name) {
-            return Err(format!("Storage with name '{}' already exists", name));
+            return Err(Error::StorageError(format!("Storage with name '{}' already exists", name)));
         }
         self.storages.push(Storage {
             name,
@@ -72,25 +73,30 @@ impl Database {
         Ok(())
     }
 
-    pub fn delete_storage(&mut self, storage_name: String) -> Result<(), String> {
+    pub fn get_storage(&self, name: String) -> Result<&Storage, Error> {
+        self.storages.iter().find(|s| s.name.as_str() == name)
+            .ok_or(Error::StorageError(format!("Storage with name '{}' not found", name)))
+    }
+
+    pub fn delete_storage(&mut self, storage_name: String) -> Result<(), Error> {
         self.storages.retain(|s| s.name != storage_name);
         Ok(())
     }
 
-    pub fn get(&self, storage_name: String, key: String) -> Result<String, String> {
+    pub fn get(&self, storage_name: String, key: String) -> Result<String, Error> {
         let storage = self
             .storages
             .iter()
             .find(|s| s.name.as_str() == storage_name)
-            .ok_or(format!("Storage with name '{}' not found", storage_name))?;
+            .ok_or(Error::StorageError(format!("Storage with name '{}' not found", storage_name)))?;
 
         let value = storage
             .data
             .get(&key)
-            .ok_or(format!(
+            .ok_or(Error::KeyNotFound(format!(
                 "Key '{}' not found in storage '{}'",
                 key, storage_name
-            ))?
+            )))?
             .clone();
         Ok(value)
     }
@@ -100,12 +106,12 @@ impl Database {
         storage_name: String,
         key: String,
         value: String,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         let storage = self
             .storages
             .iter_mut()
             .find(|s| s.name.as_str() == storage_name)
-            .ok_or(format!("Storage with name '{}' not found", storage_name))?;
+            .ok_or(Error::StorageError(format!("Storage with name '{}' not found", storage_name)))?;
 
         storage.data.insert(key, value);
         Ok(())
@@ -127,12 +133,20 @@ impl Database {
         storage_name: String,
         key: String,
         new_value: String,
-    ) -> Result<(), String> {
+    ) -> Result<(), Error> {
         let storage = self
             .storages
             .iter_mut()
             .find(|s| s.name.as_str() == storage_name)
-            .ok_or(format!("Storage with name '{}' not found", storage_name))?;
+            .ok_or(Error::StorageError(format!("Storage with name '{}' not found", storage_name)))?;
+
+        storage
+            .data
+            .get(&key)
+            .ok_or(Error::KeyNotFound(format!(
+                "Key '{}' not found in storage '{}'",
+                key, storage_name
+            )))?;
 
         storage.data.insert(key, new_value);
         Ok(())

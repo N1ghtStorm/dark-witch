@@ -49,7 +49,7 @@ use tokio::sync::Mutex;
 
 pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database>> {
     if let Err(e) = database.lock().await.create_storage("main".to_string()) {
-        println!("Error creating storage: {}", e);
+        println!("Error creating storage: {:?}", e);
         panic!("Failed to create storage");
     }
 
@@ -58,7 +58,7 @@ pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database
         "person1".to_string(),
         "{\"name\": \"John\", \"age\": 30, \"gender\": \"male\"}".to_string(),
     ) {
-        println!("Error inserting value: {}", e);
+        println!("Error inserting value: {:?}", e);
         panic!("Failed to insert value");
     }
 
@@ -67,7 +67,7 @@ pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database
         "person2".to_string(),
         "{\"name\": \"Jane\", \"age\": 25}".to_string(),
     ) {
-        println!("Error inserting value: {}", e);
+        println!("Error inserting value: {:?}", e);
         panic!("Failed to insert value");
     }
 
@@ -76,7 +76,7 @@ pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database
         "person3".to_string(),
         "{\"name\": \"Jim\", \"age\": 40}".to_string(),
     ) {
-        println!("Error inserting value: {}", e);
+        println!("Error inserting value: {:?}", e);
         panic!("Failed to insert value");
     }
 
@@ -85,7 +85,7 @@ pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database
         "person4".to_string(),
         "{\"name\": \"Jopel\", \"age\": 29}".to_string(),
     ) {
-        println!("Error inserting value: {}", e);
+        println!("Error inserting value: {:?}", e);
         panic!("Failed to insert value");
     }
 
@@ -94,7 +94,7 @@ pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database
         "person5".to_string(),
         "{\"name\": \"Khristina\", \"age\": 22, \"gender\": \"female\"}".to_string(),
     ) {
-        println!("Error inserting value: {}", e);
+        println!("Error inserting value: {:?}", e);
         panic!("Failed to insert value");
     }
 
@@ -104,7 +104,7 @@ pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database
         "{\"name\": \"Veronika\", \"age\": 35, \"gender\": \"female\", \"address\": \"Mashroom\"}"
             .to_string(),
     ) {
-        println!("Error inserting value: {}", e);
+        println!("Error inserting value: {:?}", e);
         panic!("Failed to insert value");
     }
 
