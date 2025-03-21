@@ -43,8 +43,8 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
-use crate::witchvm::Instruction;
 use crate::error::Error;
+use crate::witchvm::Instruction;
 
 // Lexer: Converts raw SQL into tokens
 #[derive(Debug, Clone, PartialEq)]
@@ -309,7 +309,8 @@ impl Parser {
         } else {
             Err(Error::SyntaxError(format!(
                 "Expected {:?}, got {:?}",
-                expected, self.peek()
+                expected,
+                self.peek()
             )))
         }
     }
@@ -330,7 +331,11 @@ impl Parser {
                     fields.push(FieldExpression::Field(name.clone()));
                     self.advance();
                 }
-                _ => return Err(Error::SyntaxError("Expected identifier in SELECT".to_string())),
+                _ => {
+                    return Err(Error::SyntaxError(
+                        "Expected identifier in SELECT".to_string(),
+                    ))
+                }
             }
 
             // Parse additional fields after commas
@@ -341,9 +346,11 @@ impl Parser {
                         fields.push(FieldExpression::Field(name.clone()));
                         self.advance();
                     }
-                    _ => return Err(Error::SyntaxError(
-                        "Expected identifier after comma".to_string(),
-                    )),
+                    _ => {
+                        return Err(Error::SyntaxError(
+                            "Expected identifier after comma".to_string(),
+                        ))
+                    }
                 }
             }
         }
@@ -356,9 +363,11 @@ impl Parser {
                 self.advance();
                 name
             }
-            _ => return Err(Error::SyntaxError(
-                "Expected table name after FROM".to_string(),
-            )),
+            _ => {
+                return Err(Error::SyntaxError(
+                    "Expected table name after FROM".to_string(),
+                ))
+            }
         };
 
         // Parse WHERE clause (if present)
@@ -411,9 +420,11 @@ impl Parser {
                 self.advance();
                 AstNode::Column(name)
             }
-            _ => return Err(Error::SyntaxError(
-                "Expected identifier in WHERE clause".to_string(),
-            )),
+            _ => {
+                return Err(Error::SyntaxError(
+                    "Expected identifier in WHERE clause".to_string(),
+                ))
+            }
         };
 
         let operator = match self.peek() {
@@ -441,10 +452,12 @@ impl Parser {
                 self.advance();
                 "!=".to_string()
             }
-            val => return Err(Error::SyntaxError(format!(
-                "Expected comparison operator, got {:?}",
-                val
-            ))),
+            val => {
+                return Err(Error::SyntaxError(format!(
+                    "Expected comparison operator, got {:?}",
+                    val
+                )))
+            }
         };
 
         let right = match self.peek() {
@@ -458,9 +471,11 @@ impl Parser {
                 self.advance();
                 AstNode::Literal(LiteralValue::String(value))
             }
-            _ => return Err(Error::SyntaxError(
-                "Expected literal value after operator".to_string(),
-            )),
+            _ => {
+                return Err(Error::SyntaxError(
+                    "Expected literal value after operator".to_string(),
+                ))
+            }
         };
 
         Ok(AstNode::BinaryOp {

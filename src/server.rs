@@ -99,7 +99,7 @@ async fn handle_sql_request(
                 Err(e) => return Err((StatusCode::INTERNAL_SERVER_ERROR, e.into_string())),
             };
             Err((StatusCode::BAD_REQUEST, err_response))
-        },
+        }
     }
 }
 

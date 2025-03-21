@@ -47,9 +47,9 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::database::Database;
+use crate::error::Error;
 use crate::sql;
 use crate::witchvm::WitchVM;
-use crate::error::Error;
 
 pub async fn handle_query(database: Arc<Mutex<Database>>, query: String) -> Result<String, Error> {
     let mut database = database.lock().await;

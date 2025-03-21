@@ -81,7 +81,8 @@ pub struct ErrorResponse {
 
 impl ErrorResponse {
     fn try_to_string(self) -> Result<String, Error> {
-        serde_json::to_string_pretty(&self).map_err(|x: serde_json::Error|Error::JsonError(x.to_string()))
+        serde_json::to_string_pretty(&self)
+            .map_err(|x: serde_json::Error| Error::JsonError(x.to_string()))
     }
 }
 
