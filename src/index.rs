@@ -43,19 +43,59 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
-mod database;
-mod error;
-mod index;
-mod query_handler;
-mod server;
-mod server_models;
-mod sql;
-mod witchvm;
+use std::collections::{BTreeMap, HashMap};
 
-#[cfg(feature = "local")]
-mod local_data;
+pub type FieldName = String;
+pub type FieldValue = String;
+pub type Key = String;
 
-#[tokio::main]
-async fn main() {
-    server::run_witch_server().await;
+pub enum Index {
+    // Index for numbers
+    // key - key
+    // value - list of ids
+    BTree(BTreeMap<Key, i64>),
+    // Index for strings
+    Hash(HashMap<Key, FieldValue>),
+}
+
+impl Index {
+    pub fn new_hashmap() -> Self {
+        Self::Hash(HashMap::new())
+    }
+
+    pub fn new_btreemap() -> Self {
+        Self::BTree(BTreeMap::new())
+    }
+
+    pub fn add_string(&mut self, key: Key, value: FieldValue) {
+        if let Self::Hash(hashmap) = self {
+            hashmap.insert(key, value);
+        }
+    }
+
+    pub fn add_number(&mut self, key: Key, value: i64) {
+        if let Self::BTree(btreemap) = self {
+            btreemap.insert(key, value);
+        }
+    }
+}
+
+pub struct IndexList {
+    list: HashMap<FieldName, Index>,
+}
+
+impl IndexList {
+    pub fn new() -> Self {
+        Self {
+            list: HashMap::new(),
+        }
+    }
+
+    pub fn create_index(&mut self, field_name: FieldName, index: Index) {
+        self.list.insert(field_name, index);
+    }
+
+    pub fn get_index(&self, field_name: &FieldName) -> Option<&Index> {
+        self.list.get(field_name)
+    }
 }

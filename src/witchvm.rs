@@ -45,6 +45,7 @@
 
 use crate::database::Database;
 use crate::error::Error;
+use crate::index::Index;
 
 pub struct WitchVM {
     instruction_storage_name: Option<String>,
@@ -153,7 +154,24 @@ impl WitchVM {
                         .map(|value| map_fn(value.clone()))
                         .collect();
                 }
-                _ => todo!(),
+                Instruction::CreateIndex {
+                    field_name,
+                    field_type,
+                } => {
+                    let Some(storage_name) = self.instruction_storage_name.clone() else {
+                        return Err(Error::ExecutionError(
+                            "No storage name provided".to_string(),
+                        ));
+                    };
+
+                    let new_new_index = match field_type {
+                        FieldType::String => Index::new_hashmap(),
+                        FieldType::Number => Index::new_btreemap(),
+                    };
+
+                    database.create_index(field_name, new_new_index, storage_name)?;
+                }
+                _ => (),
             }
         }
 
@@ -168,6 +186,13 @@ pub enum Instruction {
     },
     ClearOutput,
     FullScan {
+        filter: Filter,
+    },
+    CreateIndex {
+        field_name: String,
+        field_type: FieldType,
+    },
+    IndexScan {
         filter: Filter,
     },
     MapOutput {
@@ -195,4 +220,10 @@ pub enum Instruction {
 
 pub enum Filter {
     Condition(Box<dyn Fn(String, String) -> bool>),
+}
+
+
+pub enum FieldType {
+    String,
+    Number,
 }

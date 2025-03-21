@@ -44,11 +44,14 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 use crate::error::Error;
+use crate::index::{Index, IndexList};
+use serde_json;
 use std::collections::HashMap;
 
 pub struct Storage {
     pub name: String,
     pub data: HashMap<String, String>,
+    pub indexes: IndexList,
 }
 
 pub struct Database {
@@ -72,6 +75,7 @@ impl Database {
         self.storages.push(Storage {
             name,
             data: HashMap::new(),
+            indexes: IndexList::new(),
         });
         Ok(())
     }
@@ -166,6 +170,47 @@ impl Database {
         )))?;
 
         storage.data.insert(key, new_value);
+        Ok(())
+    }
+
+    pub fn create_index(
+        &mut self,
+        field_name: String,
+        mut index: Index,
+        storage_name: String,
+    ) -> Result<(), Error> {
+        let storage = self
+            .storages
+            .iter_mut()
+            .find(|s| s.name.as_str() == storage_name)
+            .ok_or(Error::StorageError(format!(
+                "Storage with name '{}' not found",
+                storage_name
+            )))?;
+
+        // Iterate over all key-value pairs in the storage
+        for (key, value) in &storage.data {
+            // Try to parse the value as JSON
+            if let Ok(json_value) = serde_json::from_str::<serde_json::Value>(&value) {
+                // If the field exists in the JSON, add it to the index
+                if let Some(field_value) = json_value.get(&field_name) {
+                    match index {
+                        Index::Hash(_) => {
+                            if let Some(field_str) = field_value.as_str() {
+                                index.add_string(key.clone(), field_str.to_string());
+                            }
+                        }
+                        Index::BTree(_) => {
+                            if let Some(field_num) = field_value.as_i64() {
+                                index.add_number(key.clone(), field_num);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        storage.indexes.create_index(field_name, index);
         Ok(())
     }
 }
