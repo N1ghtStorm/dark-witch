@@ -131,12 +131,15 @@ impl Database {
         Ok(())
     }
 
-    pub fn delete(&mut self, storage_name: String, key: String) -> Result<(), String> {
+    pub fn delete(&mut self, storage_name: String, key: String) -> Result<(), Error> {
         let storage = self
             .storages
             .iter_mut()
             .find(|s| s.name.as_str() == storage_name)
-            .ok_or(format!("Storage with name '{}' not found", storage_name))?;
+            .ok_or(Error::StorageError(format!(
+                "Storage with name '{}' not found",
+                storage_name
+            )))?;
 
         storage.data.remove(&key);
         Ok(())
