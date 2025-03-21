@@ -56,7 +56,7 @@ pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database
     if let Err(e) = database.lock().await.insert(
         "main".to_string(),
         "person1".to_string(),
-        "{\"name\": \"John\", \"age\": 30, \"sex\": \"male\"}".to_string(),
+        "{\"name\": \"John\", \"age\": 30, \"gender\": \"male\"}".to_string(),
     ) {
         println!("Error inserting value: {}", e);
         panic!("Failed to insert value");
@@ -91,12 +91,21 @@ pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database
 
     if let Err(e) = database.lock().await.insert(
         "main".to_string(),
-        "person4".to_string(),
-        "LALALALAL".to_string(),
+        "person5".to_string(),
+        "{\"name\": \"Khristina\", \"age\": 22, \"gender\": \"female\"}".to_string(),
     ) {
         println!("Error inserting value: {}", e);
         panic!("Failed to insert value");
     }
 
+    if let Err(e) = database.lock().await.insert(
+        "main".to_string(),
+        "person6".to_string(),
+        "{\"name\": \"Veronika\", \"age\": 35, \"gender\": \"female\", \"address\": \"Mashroom\"}".to_string(),
+    ) {
+        println!("Error inserting value: {}", e);
+        panic!("Failed to insert value");
+    }
+    
     database
 }

@@ -514,10 +514,9 @@ impl CodeGenerator {
                                                     .to_string();
                                             }
                                         };
-
-                                    let Some(value) = json.get(&name) else {
-                                        let new_json = serde_json::Map::new();
-                                        return serde_json::Value::Object(new_json).to_string();
+                                    let value = match json.get(&name) {
+                                        Some(value) => value.clone(),
+                                        None => serde_json::Value::Null,
                                     };
 
                                     // create new json with only the value
@@ -565,11 +564,12 @@ impl CodeGenerator {
                                         return serde_json::Value::Object(new_json).to_string();
                                     }
                                     FieldExpression::Field(name) => {
-                                        let Some(value) = json.get(&name) else {
-                                            let new_json = serde_json::Map::new();
-                                            return serde_json::Value::Object(new_json).to_string();
+                                        let value = match json.get(&name) {
+                                            Some(value) => value.clone(),
+                                            None => serde_json::Value::Null,
                                         };
 
+                                        // new_json.insert(name.clone(), value.clone());
                                         new_json.insert(name.clone(), value.clone());
                                     }
                                 }
@@ -648,7 +648,7 @@ impl CodeGenerator {
                                                 serde_json::from_str::<serde_json::Value>(&value)
                                             {
                                                 if let Some(name) =
-                                                    json.get("name").and_then(|v| v.as_str())
+                                                    json.get(col.clone().as_str()).and_then(|v| v.as_str())
                                                 {
                                                     return str_cond(
                                                         name.to_string(),
