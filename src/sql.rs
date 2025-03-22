@@ -275,7 +275,7 @@ enum FieldExpression {
     Field(String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum LiteralValue {
     Number(f64),
     String(String),
@@ -395,7 +395,12 @@ impl Parser {
                     let operator = match token {
                         Token::And => "AND".to_string(),
                         Token::Or => "OR".to_string(),
-                        _ => return Err(Error::SyntaxError(format!("Expected operator AND and OR, got {:?}", token)))  ,
+                        _ => {
+                            return Err(Error::SyntaxError(format!(
+                                "Expected operator AND and OR, got {:?}",
+                                token
+                            )))
+                        }
                     };
                     self.advance();
                     let right = self.parse_comparison()?;
@@ -522,7 +527,9 @@ impl CodeGenerator {
                     None => Box::new(|_: String, _: String| true),
                 };
 
-                self.emit(Instruction::FullScan {
+                // let lefts_rights = self.get_where_lefts_rights(condition)?;
+
+                self.emit(Instruction::Scan {
                     filter: crate::witchvm::Filter::Condition(predicate),
                 });
 
@@ -701,6 +708,44 @@ impl CodeGenerator {
             }
             _ => Err(Error::SyntaxError("Unhandled Condition".to_string())),
         }
+    }
+
+    fn get_where_lefts_rights(
+        &self,
+        condition: &AstNode,
+    ) -> Result<Vec<(String, LiteralValue)>, Error> {
+        let mut result: Vec<(String, LiteralValue)> = Vec::new();
+
+        match condition {
+            AstNode::BinaryOp {
+                left,
+                operator,
+                right,
+            } => {
+                match operator.as_str() {
+                    "AND" | "OR" => {
+                        let small_vec = self.get_where_lefts_rights(left)?;
+                        result.extend(small_vec);
+                    }
+                    _ => {
+                        // result.push((left.clone(), right.clone()));
+                        let field = match &**left {
+                            AstNode::Column(name) => name.clone(),
+                            _ => return Err(Error::SyntaxError("Unhandled Condition".to_string())),
+                        };
+
+                        let field_value = match &**right {
+                            AstNode::Literal(val) => val.clone(),
+                            _ => return Err(Error::SyntaxError("Unhandled Condition".to_string())),
+                        };
+                        result.push((field, field_value));
+                    }
+                }
+            },
+            _ => return Err(Error::SyntaxError("Unhandled Condition".to_string())),
+        }
+
+        Ok(result)
     }
 }
 

@@ -50,3 +50,9 @@ pub enum FieldType {
     String,
     Number,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum FieldValue {
+    String(String),
+    Number(f64),
+}

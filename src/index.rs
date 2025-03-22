@@ -104,4 +104,8 @@ impl IndexList {
     pub fn create_index(&mut self, field_name: FieldName, index: Index) {
         self.list.insert(field_name, index);
     }
+
+    pub fn index_exists(&self, field_name: &FieldName) -> bool {
+        self.list.contains_key(field_name)
+    }
 }

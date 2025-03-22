@@ -43,6 +43,9 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
+use serde::{Deserialize, Serialize};
+use std::time::Duration;
+
 use crate::database::Database;
 use crate::error::Error;
 
@@ -67,7 +70,8 @@ impl WitchVM {
         &mut self,
         database: &mut Database,
         instructions: Vec<Instruction>,
-    ) -> Result<(), Error> {
+    ) -> Result<Vec<ExplainStep>, Error> {
+        let mut explain = Vec::new();
         for instruction in instructions {
             match instruction {
                 Instruction::Get { key } => {
@@ -125,9 +129,10 @@ impl WitchVM {
                     }
                 }
                 Instruction::UseStorage { name } => {
-                    self.instruction_storage_name = Some(name);
+                    self.instruction_storage_name = Some(name.clone());
+                    explain.push(ExplainStep::SetStorage(name));
                 }
-                Instruction::FullScan { filter } => {
+                Instruction::Scan { filter } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
                         return Err(Error::ExecutionError(
                             "No storage name provided".to_string(),
@@ -152,12 +157,13 @@ impl WitchVM {
                         .iter()
                         .map(|value| map_fn(value.clone()))
                         .collect();
+                    explain.push(ExplainStep::MapOutput);
                 }
                 _ => (),
             }
         }
 
-        Ok(())
+        Ok(explain)
     }
 }
 
@@ -167,10 +173,10 @@ pub enum Instruction {
         name: String,
     },
     ClearOutput,
-    FullScan {
+    ChooseScanPath {
         filter: Filter,
     },
-    IndexScan {
+    Scan {
         filter: Filter,
     },
     MapOutput {
@@ -198,4 +204,12 @@ pub enum Instruction {
 
 pub enum Filter {
     Condition(Box<dyn Fn(String, String) -> bool>),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum ExplainStep {
+    SetStorage(String),
+    FullScan { time: Duration },
+    IndexScan { time: Duration },
+    MapOutput,
 }
