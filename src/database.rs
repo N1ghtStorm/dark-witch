@@ -43,6 +43,7 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
+use crate::common::FieldType;
 use crate::error::Error;
 use crate::index::{Index, IndexList};
 use serde_json;
@@ -175,9 +176,10 @@ impl Database {
 
     pub fn create_index(
         &mut self,
-        field_name: String,
-        mut index: Index,
         storage_name: String,
+        field_name: String,
+        field_type: FieldType,
+        unique: bool,
     ) -> Result<(), Error> {
         let storage = self
             .storages
@@ -188,6 +190,27 @@ impl Database {
                 storage_name
             )))?;
 
+        let mut index = match field_type {
+            FieldType::String => {
+                if unique {
+                    Index::new_unique_hashmap()
+                } else {
+                    return Err(Error::IndexError(
+                        "Non unique indexes are not supported for strings".to_string(),
+                    ));
+                }
+            }
+            FieldType::Number => {
+                if unique {
+                    Index::new_unique_btreemap()
+                } else {
+                    return Err(Error::IndexError(
+                        "Non unique indexes are not supported for numbers".to_string(),
+                    ));
+                }
+            }
+        };
+
         // Iterate over all key-value pairs in the storage
         for (key, value) in &storage.data {
             // Try to parse the value as JSON
@@ -195,14 +218,14 @@ impl Database {
                 // If the field exists in the JSON, add it to the index
                 if let Some(field_value) = json_value.get(&field_name) {
                     match index {
-                        Index::Hash(_) => {
+                        Index::HashUnique(_) => {
                             if let Some(field_str) = field_value.as_str() {
-                                index.add_string(key.clone(), field_str.to_string());
+                                index.add_string_unique(key.clone(), field_str.to_string())?;
                             }
                         }
-                        Index::BTree(_) => {
+                        Index::BTreeUnique(_) => {
                             if let Some(field_num) = field_value.as_i64() {
-                                index.add_number(key.clone(), field_num);
+                                index.add_number_unique(key.clone(), field_num)?;
                             }
                         }
                     }

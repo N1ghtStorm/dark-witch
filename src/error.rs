@@ -54,6 +54,7 @@ pub enum Error {
     StorageError(String),
     KeyNotFound(String),
     ExecutionError(String),
+    IndexError(String),
 }
 
 impl Error {
@@ -66,6 +67,7 @@ impl Error {
             Error::StorageError(s) => s,
             Error::KeyNotFound(s) => s,
             Error::ExecutionError(s) => s,
+            Error::IndexError(s) => s,
         }
     }
 

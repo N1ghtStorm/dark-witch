@@ -71,6 +71,7 @@ pub async fn run_witch_server() {
         .route("/delete_key_value", delete(delete_key_value))
         .route("/change_value", put(change_value))
         .route("/get_value", get(get_value))
+        .route("/create_index", post(create_index))
         .with_state(database);
 
     // run our app
@@ -171,6 +172,21 @@ async fn change_value(
         .await
         .change(request.storage_name, request.key, request.new_value)
     {
+        Ok(_) => Ok("".to_string()),
+        Err(e) => Err((StatusCode::BAD_REQUEST, e.into_string())),
+    }
+}
+
+async fn create_index(
+    State(database): State<Arc<Mutex<Database>>>,
+    Json(request): Json<CreateIndexRequest>,
+) -> Result<String, (StatusCode, String)> {
+    match database.lock().await.create_index(
+        request.storage_name,
+        request.field_name,
+        request.field_type,
+        request.unique,
+    ) {
         Ok(_) => Ok("".to_string()),
         Err(e) => Err((StatusCode::BAD_REQUEST, e.into_string())),
     }

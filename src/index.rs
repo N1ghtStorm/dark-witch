@@ -43,6 +43,7 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
+use crate::error::Error;
 use std::collections::{BTreeMap, HashMap};
 
 pub type FieldName = String;
@@ -53,30 +54,38 @@ pub enum Index {
     // Index for numbers
     // key - key
     // value - list of ids
-    BTree(BTreeMap<Key, i64>),
+    BTreeUnique(BTreeMap<Key, i64>),
     // Index for strings
-    Hash(HashMap<Key, FieldValue>),
+    HashUnique(HashMap<Key, FieldValue>),
 }
 
 impl Index {
-    pub fn new_hashmap() -> Self {
-        Self::Hash(HashMap::new())
+    pub fn new_unique_hashmap() -> Self {
+        Self::HashUnique(HashMap::new())
     }
 
-    pub fn new_btreemap() -> Self {
-        Self::BTree(BTreeMap::new())
+    pub fn new_unique_btreemap() -> Self {
+        Self::BTreeUnique(BTreeMap::new())
     }
 
-    pub fn add_string(&mut self, key: Key, value: FieldValue) {
-        if let Self::Hash(hashmap) = self {
+    pub fn add_string_unique(&mut self, key: Key, value: FieldValue) -> Result<(), Error> {
+        if let Self::HashUnique(hashmap) = self {
+            if hashmap.contains_key(&key) {
+                return Err(Error::IndexError("Key already exists".to_string()));
+            }
             hashmap.insert(key, value);
         }
+        Ok(())
     }
 
-    pub fn add_number(&mut self, key: Key, value: i64) {
-        if let Self::BTree(btreemap) = self {
+    pub fn add_number_unique(&mut self, key: Key, value: i64) -> Result<(), Error> {
+        if let Self::BTreeUnique(btreemap) = self {
+            if btreemap.contains_key(&key) {
+                return Err(Error::IndexError("Key already exists".to_string()));
+            }
             btreemap.insert(key, value);
         }
+        Ok(())
     }
 }
 
