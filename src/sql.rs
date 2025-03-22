@@ -395,7 +395,7 @@ impl Parser {
                     let operator = match token {
                         Token::And => "AND".to_string(),
                         Token::Or => "OR".to_string(),
-                        _ => unreachable!(),
+                        _ => return Err(Error::SyntaxError(format!("Expected operator AND and OR, got {:?}", token)))  ,
                     };
                     self.advance();
                     let right = self.parse_comparison()?;

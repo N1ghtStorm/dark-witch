@@ -103,10 +103,5 @@ impl IndexList {
 
     pub fn create_index(&mut self, field_name: FieldName, index: Index) {
         self.list.insert(field_name, index);
-        println!("Index created: {:?}", self.list);
-    }
-
-    pub fn get_index(&self, field_name: &FieldName) -> Option<&Index> {
-        self.list.get(field_name)
     }
 }
