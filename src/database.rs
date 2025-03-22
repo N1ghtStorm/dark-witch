@@ -220,12 +220,20 @@ impl Database {
                     match index {
                         Index::HashUnique(_) => {
                             if let Some(field_str) = field_value.as_str() {
-                                index.add_string_unique(key.clone(), field_str.to_string())?;
+                                index
+                                    .add_string_unique(key.clone(), field_str.to_string())
+                                    .map_err(|e| {
+                                        Error::IndexError(format!("Error creating index: {:?}", e))
+                                    })?;
                             }
                         }
                         Index::BTreeUnique(_) => {
                             if let Some(field_num) = field_value.as_i64() {
-                                index.add_number_unique(key.clone(), field_num)?;
+                                index
+                                    .add_number_unique(key.clone(), field_num)
+                                    .map_err(|e| {
+                                        Error::IndexError(format!("Error creating index: {:?}", e))
+                                    })?;
                             }
                         }
                     }

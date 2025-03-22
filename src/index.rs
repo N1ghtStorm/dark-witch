@@ -50,13 +50,14 @@ pub type FieldName = String;
 pub type FieldValue = String;
 pub type Key = String;
 
+#[derive(Debug)]
 pub enum Index {
     // Index for numbers
     // key - key
     // value - list of ids
-    BTreeUnique(BTreeMap<Key, i64>),
+    BTreeUnique(BTreeMap<i64, Key>),
     // Index for strings
-    HashUnique(HashMap<Key, FieldValue>),
+    HashUnique(HashMap<FieldValue, Key>),
 }
 
 impl Index {
@@ -68,22 +69,22 @@ impl Index {
         Self::BTreeUnique(BTreeMap::new())
     }
 
-    pub fn add_string_unique(&mut self, key: Key, value: FieldValue) -> Result<(), Error> {
+    pub fn add_string_unique(&mut self, key: Key, field_value: FieldValue) -> Result<(), Error> {
         if let Self::HashUnique(hashmap) = self {
             if hashmap.contains_key(&key) {
-                return Err(Error::IndexError("Key already exists".to_string()));
+                return Err(Error::IndexError("Duplicate key".to_string()));
             }
-            hashmap.insert(key, value);
+            hashmap.insert(field_value, key);
         }
         Ok(())
     }
 
-    pub fn add_number_unique(&mut self, key: Key, value: i64) -> Result<(), Error> {
+    pub fn add_number_unique(&mut self, key: Key, num_value: i64) -> Result<(), Error> {
         if let Self::BTreeUnique(btreemap) = self {
-            if btreemap.contains_key(&key) {
-                return Err(Error::IndexError("Key already exists".to_string()));
+            if btreemap.contains_key(&num_value) {
+                return Err(Error::IndexError("Duplicate key".to_string()));
             }
-            btreemap.insert(key, value);
+            btreemap.insert(num_value, key);
         }
         Ok(())
     }
@@ -102,6 +103,7 @@ impl IndexList {
 
     pub fn create_index(&mut self, field_name: FieldName, index: Index) {
         self.list.insert(field_name, index);
+        println!("Index created: {:?}", self.list);
     }
 
     pub fn get_index(&self, field_name: &FieldName) -> Option<&Index> {
