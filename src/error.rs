@@ -53,6 +53,7 @@ pub enum Error {
     JsonError(String),
     StorageError(String),
     KeyNotFound(String),
+    KeyAlreadyExists(String),
     ExecutionError(String),
     IndexError(String),
 }
@@ -66,6 +67,7 @@ impl Error {
             Error::JsonError(s) => s,
             Error::StorageError(s) => s,
             Error::KeyNotFound(s) => s,
+            Error::KeyAlreadyExists(s) => s,
             Error::ExecutionError(s) => s,
             Error::IndexError(s) => s,
         }

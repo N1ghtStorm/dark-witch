@@ -105,6 +105,10 @@ impl IndexList {
         self.list.insert(field_name, index);
     }
 
+    pub fn get_index_mut(&mut self, field_name: &FieldName) -> Option<&mut Index> {
+        self.list.get_mut(field_name)
+    }
+
     pub fn index_exists(&self, field_name: &FieldName) -> bool {
         self.list.contains_key(field_name)
     }
