@@ -132,7 +132,7 @@ impl WitchVM {
                     self.instruction_storage_name = Some(name.clone());
                     explain.push(ExplainStep::SetStorage(name));
                 }
-                Instruction::Scan { 
+                Instruction::Scan {
                     filter,
                     string_fields_values,
                     number_fields_values,
@@ -145,7 +145,7 @@ impl WitchVM {
 
                     println!("string_fields_values: {:?}", string_fields_values);
                     println!("number_fields_values: {:?}", number_fields_values);
-                    
+
                     let storage = database.get_storage(storage_name)?;
 
                     for (key, value) in storage.data.iter() {

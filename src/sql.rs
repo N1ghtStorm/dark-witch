@@ -539,7 +539,7 @@ impl CodeGenerator {
                             }
                         }
                         (string_fields_values, number_fields_values)
-                    },
+                    }
                     None => (Vec::new(), Vec::new()),
                 };
 
@@ -736,25 +736,23 @@ impl CodeGenerator {
                 left,
                 operator,
                 right,
-            } => {
-                match operator.as_str() {
-                    "OR" => {
-                        result.extend(self.get_where_lefts_rights(left)?);
-                        result.extend(self.get_where_lefts_rights(right)?);
-                    },
-                    "AND" => {},
-                    _ => {
-                        let field = match &**left {
-                            AstNode::Column(name) => name.clone(),
-                            _ => return Err(Error::SyntaxError("Unhandled Condition".to_string())),
-                        };
+            } => match operator.as_str() {
+                "OR" => {
+                    result.extend(self.get_where_lefts_rights(left)?);
+                    result.extend(self.get_where_lefts_rights(right)?);
+                }
+                "AND" => {}
+                _ => {
+                    let field = match &**left {
+                        AstNode::Column(name) => name.clone(),
+                        _ => return Err(Error::SyntaxError("Unhandled Condition".to_string())),
+                    };
 
-                        let field_value = match &**right {
-                            AstNode::Literal(val) => val.clone(),
-                            _ => return Err(Error::SyntaxError("Unhandled Condition".to_string())),
-                        };
-                        result.push((field, field_value));
-                    }
+                    let field_value = match &**right {
+                        AstNode::Literal(val) => val.clone(),
+                        _ => return Err(Error::SyntaxError("Unhandled Condition".to_string())),
+                    };
+                    result.push((field, field_value));
                 }
             },
             _ => return Err(Error::SyntaxError("Unhandled Condition".to_string())),

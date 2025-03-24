@@ -159,7 +159,7 @@ impl Database {
                                         )));
                                     }
                                     hashmap.insert(field_str.to_string(), key.clone());
-                                }                       
+                                }
                             }
                             Index::BTreeUnique(btreemap) => {
                                 // btreemap.insert(field_value.as_i64().unwrap(), key.clone());
@@ -212,7 +212,7 @@ impl Database {
                             Index::HashUnique(hashmap) => {
                                 if let Some(field_str) = field_value.as_str() {
                                     hashmap.remove(&field_str.to_string());
-                                }                       
+                                }
                             }
                             Index::BTreeUnique(btreemap) => {
                                 if let Some(field_num) = field_value.as_i64() {
@@ -269,7 +269,7 @@ impl Database {
                                         )));
                                     }
                                     hashmap.insert(field_str.to_string(), key.clone());
-                                }                       
+                                }
                             }
                             Index::BTreeUnique(btreemap) => {
                                 // btreemap.insert(field_value.as_i64().unwrap(), key.clone());
