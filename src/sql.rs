@@ -527,10 +527,26 @@ impl CodeGenerator {
                     None => Box::new(|_: String, _: String| true),
                 };
 
-                // let lefts_rights = self.get_where_lefts_rights(condition)?;
+                let (string_fields_values, number_fields_values) = match where_clause {
+                    Some(condition) => {
+                        let lefts_rights = self.get_where_lefts_rights(condition)?;
+                        let mut string_fields_values = Vec::new();
+                        let mut number_fields_values = Vec::new();
+                        for (field, value) in lefts_rights {
+                            match value {
+                                LiteralValue::String(s) => string_fields_values.push((field, s)),
+                                LiteralValue::Number(n) => number_fields_values.push((field, n)),
+                            }
+                        }
+                        (string_fields_values, number_fields_values)
+                    },
+                    None => (Vec::new(), Vec::new()),
+                };
 
                 self.emit(Instruction::Scan {
                     filter: crate::witchvm::Filter::Condition(predicate),
+                    string_fields_values,
+                    number_fields_values,
                 });
 
                 if fields.len() == 1 {
@@ -715,7 +731,6 @@ impl CodeGenerator {
         condition: &AstNode,
     ) -> Result<Vec<(String, LiteralValue)>, Error> {
         let mut result: Vec<(String, LiteralValue)> = Vec::new();
-
         match condition {
             AstNode::BinaryOp {
                 left,
@@ -723,12 +738,12 @@ impl CodeGenerator {
                 right,
             } => {
                 match operator.as_str() {
-                    "AND" | "OR" => {
-                        let small_vec = self.get_where_lefts_rights(left)?;
-                        result.extend(small_vec);
-                    }
+                    "OR" => {
+                        result.extend(self.get_where_lefts_rights(left)?);
+                        result.extend(self.get_where_lefts_rights(right)?);
+                    },
+                    "AND" => {},
                     _ => {
-                        // result.push((left.clone(), right.clone()));
                         let field = match &**left {
                             AstNode::Column(name) => name.clone(),
                             _ => return Err(Error::SyntaxError("Unhandled Condition".to_string())),

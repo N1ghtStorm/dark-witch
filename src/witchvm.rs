@@ -132,13 +132,20 @@ impl WitchVM {
                     self.instruction_storage_name = Some(name.clone());
                     explain.push(ExplainStep::SetStorage(name));
                 }
-                Instruction::Scan { filter } => {
+                Instruction::Scan { 
+                    filter,
+                    string_fields_values,
+                    number_fields_values,
+                } => {
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
                         return Err(Error::ExecutionError(
                             "No storage name provided".to_string(),
                         ));
                     };
 
+                    println!("string_fields_values: {:?}", string_fields_values);
+                    println!("number_fields_values: {:?}", number_fields_values);
+                    
                     let storage = database.get_storage(storage_name)?;
 
                     for (key, value) in storage.data.iter() {
@@ -178,6 +185,8 @@ pub enum Instruction {
     },
     Scan {
         filter: Filter,
+        string_fields_values: Vec<(String, String)>,
+        number_fields_values: Vec<(String, f64)>,
     },
     MapOutput {
         map_fn: Box<dyn Fn(String) -> String>,
