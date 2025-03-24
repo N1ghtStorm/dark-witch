@@ -150,7 +150,7 @@ impl Database {
         Ok(())
     }
 
-    pub fn change(
+    pub fn update(
         &mut self,
         storage_name: String,
         key: String,

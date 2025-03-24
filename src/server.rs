@@ -170,7 +170,7 @@ async fn change_value(
     match database
         .lock()
         .await
-        .change(request.storage_name, request.key, request.new_value)
+        .update(request.storage_name, request.key, request.new_value)
     {
         Ok(_) => Ok("".to_string()),
         Err(e) => Err((StatusCode::BAD_REQUEST, e.into_string())),
