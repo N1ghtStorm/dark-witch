@@ -193,6 +193,38 @@ impl Database {
                 storage_name
             )))?;
 
+        let value = storage.data.get(&key).ok_or(Error::KeyNotFound(format!(
+            "Key '{}' not found in storage '{}'",
+            key, storage_name
+        )))?;
+
+        let indexes = &mut storage.indexes;
+
+        // Parse the value as JSON
+        if let Ok(json_value) = serde_json::from_str::<serde_json::Value>(&value) {
+            // Check if it's an object
+            if let Some(obj) = json_value.as_object() {
+                // Iterate through all fields in the JSON object
+                for (field_name, field_value) in obj {
+                    // Process each field here
+                    if let Some(index) = indexes.get_index_mut(field_name) {
+                        match index {
+                            Index::HashUnique(hashmap) => {
+                                if let Some(field_str) = field_value.as_str() {
+                                    hashmap.remove(&field_str.to_string());
+                                }                       
+                            }
+                            Index::BTreeUnique(btreemap) => {
+                                if let Some(field_num) = field_value.as_i64() {
+                                    btreemap.remove(&field_num);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         storage.data.remove(&key);
         Ok(())
     }
@@ -216,6 +248,46 @@ impl Database {
             "Key '{}' not found in storage '{}'",
             key, storage_name
         )))?;
+
+        let indexes = &mut storage.indexes;
+
+        // Parse the value as JSON
+        if let Ok(json_value) = serde_json::from_str::<serde_json::Value>(&new_value) {
+            // Check if it's an object
+            if let Some(obj) = json_value.as_object() {
+                // Iterate through all fields in the JSON object
+                for (field_name, field_value) in obj {
+                    // Process each field here
+                    if let Some(index) = indexes.get_index_mut(field_name) {
+                        match index {
+                            Index::HashUnique(hashmap) => {
+                                if let Some(field_str) = field_value.as_str() {
+                                    if hashmap.contains_key(&field_str.to_string()) {
+                                        return Err(Error::IndexError(format!(
+                                            "Unique constraint violation: '{}' = '{}' already exists",
+                                            field_name, field_str
+                                        )));
+                                    }
+                                    hashmap.insert(field_str.to_string(), key.clone());
+                                }                       
+                            }
+                            Index::BTreeUnique(btreemap) => {
+                                // btreemap.insert(field_value.as_i64().unwrap(), key.clone());
+                                if let Some(field_num) = field_value.as_i64() {
+                                    if btreemap.contains_key(&field_num) {
+                                        return Err(Error::IndexError(format!(
+                                            "Unique constraint violation: '{}' = '{}' already exists",
+                                            field_name, field_num
+                                        )));
+                                    }
+                                    btreemap.insert(field_num, key.clone());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         storage.data.insert(key, new_value);
         Ok(())
