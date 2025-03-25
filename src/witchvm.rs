@@ -44,10 +44,10 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
 
 use crate::database::Database;
 use crate::error::Error;
+use tokio::time::{Duration, Instant};
 
 pub struct WitchVM {
     instruction_storage_name: Option<String>,
@@ -137,25 +137,61 @@ impl WitchVM {
                     string_fields_values,
                     number_fields_values,
                 } => {
+                    let start = Instant::now();
                     let Some(storage_name) = self.instruction_storage_name.clone() else {
                         return Err(Error::ExecutionError(
                             "No storage name provided".to_string(),
                         ));
                     };
 
-                    println!("string_fields_values: {:?}", string_fields_values);
-                    println!("number_fields_values: {:?}", number_fields_values);
+                    let indexes = &database.get_storage(storage_name.clone())?.indexes;
 
-                    let storage = database.get_storage(storage_name)?;
+                    // Check if all fields are indexed
+                    // if not - then full scan
+                    // not sure it's correct
+                    let all_fields_indexed = string_fields_values.iter().map(|x|{
+                        indexes.index_exists(&x.0)
+                    }).reduce(|x, y| x && y).unwrap_or(true) &&
+                    number_fields_values.iter().map(|x|{
+                        indexes.index_exists(&x.0)
+                    }).reduce(|x, y| x && y).unwrap_or(true);
 
-                    for (key, value) in storage.data.iter() {
-                        match filter {
-                            Filter::Condition(ref condition) => {
-                                if condition(key.clone(), value.clone()) {
-                                    self.output.push(value.clone());
+                    if all_fields_indexed {
+                        for (field, field_value) in string_fields_values.iter() {
+                            if let Some(index) = indexes.get_index(field) {
+                                let Some(key) = index.get_hash_key(field_value.clone()) else {
+                                    println!("Key for field '{}' not found", field);
+                                    // indexed = false;
+                                    continue;
+                                };
+                                let json_value = database.get(storage_name.clone(), key.clone())?;
+                                // indexed_output.push(json_value);
+                                match filter {
+                                    Filter::Condition(ref condition) => {
+                                        if condition(key.clone(), json_value.clone()) {
+                                            self.output.push(json_value.clone());
+                                        }
+                                    }
+                                }
+                            }
+
+                            // for number fields
+                            // TODO: implement
+                        }
+                        explain.push(ExplainStep::IndexScan { time: start.elapsed() });
+                        
+                    } else {
+                        let storage = database.get_storage(storage_name)?;
+                        for (key, value) in storage.data.iter() {
+                            match filter {
+                                Filter::Condition(ref condition) => {
+                                    if condition(key.clone(), value.clone()) {
+                                        self.output.push(value.clone());
+                                    }
                                 }
                             }
                         }
+                        explain.push(ExplainStep::FullScan { time: start.elapsed() });
                     }
                 }
                 Instruction::MapOutput { map_fn } => {

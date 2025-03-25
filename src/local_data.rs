@@ -45,6 +45,7 @@
 
 use crate::database::Database;
 use std::sync::Arc;
+use rand::Rng;
 use tokio::sync::Mutex;
 
 // Only for testing purposes, used in "local" feature. Will be removed in future.
@@ -107,6 +108,22 @@ pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database
     ) {
         println!("Error inserting value: {:?}", e);
         panic!("Failed to insert value");
+    }
+
+    for i in 20..100000 {
+        if let Err(e) = database.lock().await.insert(
+            "main".to_string(),
+            format!("person{}", i),
+            format!(
+                "{{\"name\": \"Person {}\", \"age\": {}, \"gender\": \"male\"}}",
+                i,
+                //make random number between 18 and 90
+                rand::thread_rng().gen_range(18..=90)
+            ),
+        ) {
+            println!("Error inserting value: {:?}", e);
+            panic!("Failed to insert value");
+        }
     }
 
     database

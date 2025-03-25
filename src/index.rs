@@ -88,6 +88,13 @@ impl Index {
         }
         Ok(())
     }
+
+    pub fn get_hash_key(&self, field_value: FieldValue) -> Option<&Key> {
+        match self {
+            Self::HashUnique(hashmap) => hashmap.get(&field_value),
+            Self::BTreeUnique(_) => None,
+        }
+    }
 }
 
 pub struct IndexList {
@@ -103,6 +110,10 @@ impl IndexList {
 
     pub fn create_index(&mut self, field_name: FieldName, index: Index) {
         self.list.insert(field_name, index);
+    }
+
+    pub fn get_index(&self, field_name: &FieldName) -> Option<&Index> {
+        self.list.get(field_name)
     }
 
     pub fn get_index_mut(&mut self, field_name: &FieldName) -> Option<&mut Index> {
