@@ -44,8 +44,8 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 use crate::database::Database;
-use std::sync::Arc;
 use rand::Rng;
+use std::sync::Arc;
 use tokio::sync::Mutex;
 
 // Only for testing purposes, used in "local" feature. Will be removed in future.

@@ -149,12 +149,16 @@ impl WitchVM {
                     // Check if all fields are indexed
                     // if not - then full scan
                     // not sure it's correct
-                    let all_fields_indexed = string_fields_values.iter().map(|x|{
-                        indexes.index_exists(&x.0)
-                    }).reduce(|x, y| x && y).unwrap_or(true) &&
-                    number_fields_values.iter().map(|x|{
-                        indexes.index_exists(&x.0)
-                    }).reduce(|x, y| x && y).unwrap_or(true);
+                    let all_fields_indexed = string_fields_values
+                        .iter()
+                        .map(|x| indexes.index_exists(&x.0))
+                        .reduce(|x, y| x && y)
+                        .unwrap_or(true)
+                        && number_fields_values
+                            .iter()
+                            .map(|x| indexes.index_exists(&x.0))
+                            .reduce(|x, y| x && y)
+                            .unwrap_or(true);
 
                     if all_fields_indexed {
                         for (field, field_value) in string_fields_values.iter() {
@@ -178,8 +182,9 @@ impl WitchVM {
                             // for number fields
                             // TODO: implement
                         }
-                        explain.push(ExplainStep::IndexScan { time: start.elapsed() });
-                        
+                        explain.push(ExplainStep::IndexScan {
+                            time: start.elapsed(),
+                        });
                     } else {
                         let storage = database.get_storage(storage_name)?;
                         for (key, value) in storage.data.iter() {
@@ -191,7 +196,9 @@ impl WitchVM {
                                 }
                             }
                         }
-                        explain.push(ExplainStep::FullScan { time: start.elapsed() });
+                        explain.push(ExplainStep::FullScan {
+                            time: start.elapsed(),
+                        });
                     }
                 }
                 Instruction::MapOutput { map_fn } => {
