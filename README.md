@@ -62,3 +62,8 @@ curl -X GET 'http://localhost:3000/sql' \
     "sql": "SELECT * FROM main WHERE name = '\''Jane'\''"
 }'
 ```
+
+
+## Indexes
+
+Supports Unique Indexes for String values
