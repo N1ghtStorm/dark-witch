@@ -95,3 +95,8 @@ pub struct CreateIndexRequest {
     pub field_type: FieldType,
     pub unique: bool,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ExplainRequest {
+    pub sql: String,
+}

@@ -63,7 +63,6 @@ curl -X GET 'http://localhost:3000/sql' \
 }'
 ```
 
-
 ## Indexes
 
 Supports Unique Indexes for String values

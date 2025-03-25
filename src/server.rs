@@ -44,7 +44,7 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 use crate::database::Database;
-use crate::query_handler::handle_query;
+use crate::query_handler::{explain_query, handle_query};
 use crate::server_models::*;
 use axum::routing::{delete, post, put};
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
@@ -72,6 +72,7 @@ pub async fn run_witch_server() {
         .route("/change_value", put(change_value))
         .route("/get_value", get(get_value))
         .route("/create_index", post(create_index))
+        .route("/explain", get(explain))
         .with_state(database);
 
     // run our app
@@ -188,6 +189,16 @@ async fn create_index(
         request.unique,
     ) {
         Ok(_) => Ok("".to_string()),
+        Err(e) => Err((StatusCode::BAD_REQUEST, e.into_string())),
+    }
+}
+
+async fn explain(
+    State(database): State<Arc<Mutex<Database>>>,
+    Json(request): Json<ExplainRequest>,
+) -> Result<String, (StatusCode, String)> {
+    match explain_query(database, request.sql).await {
+        Ok(result) => Ok(result),
         Err(e) => Err((StatusCode::BAD_REQUEST, e.into_string())),
     }
 }

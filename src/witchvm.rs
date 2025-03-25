@@ -165,7 +165,6 @@ impl WitchVM {
                             if let Some(index) = indexes.get_index(field) {
                                 let Some(key) = index.get_hash_key(field_value.clone()) else {
                                     println!("Key for field '{}' not found", field);
-                                    // indexed = false;
                                     continue;
                                 };
                                 let json_value = database.get(storage_name.clone(), key.clone())?;

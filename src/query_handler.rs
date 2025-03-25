@@ -67,3 +67,21 @@ pub async fn handle_query(database: Arc<Mutex<Database>>, query: String) -> Resu
     vm.execute(&mut database, generator.instructions)?;
     Ok(vm.into_output().join(","))
 }
+
+
+pub async fn explain_query(database: Arc<Mutex<Database>>, query: String) -> Result<String, Error> {
+    let mut database = database.lock().await;
+    let mut lexer = sql::Lexer::new(&query);
+    let tokens = lexer.tokenize();
+    let mut parser = sql::Parser::new(tokens);
+    let ast = parser.parse()?;
+    #[cfg(feature = "local")]
+    {
+        println!("{:?}", ast);
+    }
+    let mut generator = sql::CodeGenerator::new();
+    generator.generate(&ast)?;
+    let mut vm: WitchVM = WitchVM::new();
+    let results = vm.execute(&mut database, generator.instructions)?;
+    Ok(results.into_iter().map(|x| serde_json::to_string(&x).unwrap_or("{}".to_string())).collect::<Vec<String>>().join(","))
+}
