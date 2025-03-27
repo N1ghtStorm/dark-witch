@@ -391,14 +391,18 @@ impl Parser {
                 return Err(Error::SyntaxError("Expected BY after ORDER".to_string()));
             }
             self.advance();
-            
+
             match self.peek() {
                 Some(Token::Identifier(name)) => {
                     let name = name.clone();
                     self.advance();
                     Some(name)
                 }
-                _ => return Err(Error::SyntaxError("Expected column name after ORDER BY".to_string())),
+                _ => {
+                    return Err(Error::SyntaxError(
+                        "Expected column name after ORDER BY".to_string(),
+                    ))
+                }
             }
         } else {
             None
@@ -662,6 +666,13 @@ impl CodeGenerator {
                     return Err(Error::SyntaxError(
                         "Syntax error: No fields in SELECT".to_string(),
                     ));
+                }
+
+                if let Some(order_by) = order_by {
+                    let instruction = Instruction::SortOutput {
+                        field: order_by.clone(),
+                    };
+                    self.emit(instruction);
                 }
 
                 Ok(())

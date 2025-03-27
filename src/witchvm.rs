@@ -233,6 +233,18 @@ impl WitchVM {
                         .collect();
                     explain.push(ExplainStep::MapOutput);
                 }
+                Instruction::SortOutput { field } => {
+                    self.output.sort_by(|x, y| {
+                        let json_x: serde_json::Value = serde_json::from_str(x).unwrap_or_default();
+                        let json_y: serde_json::Value = serde_json::from_str(y).unwrap_or_default();
+
+                        let x_field = json_x[&field].to_string();
+                        let y_field = json_y[&field].to_string();
+
+                        x_field.cmp(&y_field)
+                    });
+                    explain.push(ExplainStep::SortOutput);
+                }
                 _ => (),
             }
         }
@@ -257,6 +269,9 @@ pub enum Instruction {
     },
     MapOutput {
         map_fn: Box<dyn Fn(String) -> String>,
+    },
+    SortOutput {
+        field: String,
     },
     Get {
         key: String,
@@ -288,4 +303,5 @@ pub enum ExplainStep {
     FullScan { time: Duration },
     IndexScan { time: Duration },
     MapOutput,
+    SortOutput,
 }
