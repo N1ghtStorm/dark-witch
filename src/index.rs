@@ -59,7 +59,7 @@ pub enum Index {
     // Uniqe Index for strings
     HashUnique(HashMap<FieldValue, Key>),
     // Index for strings
-    Hash(HashMap<FieldValue, Vec<Key>>)
+    Hash(HashMap<FieldValue, Vec<Key>>),
 }
 
 impl Index {
@@ -93,7 +93,10 @@ impl Index {
 
     pub fn add_string(&mut self, key: Key, field_value: FieldValue) -> Result<(), Error> {
         if let Self::Hash(hashmap) = self {
-            hashmap.entry(field_value).or_insert_with(Vec::new).push(key);
+            hashmap
+                .entry(field_value)
+                .or_insert_with(Vec::new)
+                .push(key);
         }
         Ok(())
     }
