@@ -115,10 +115,11 @@ pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database
             "main".to_string(),
             format!("person{}", i),
             format!(
-                "{{\"name\": \"Person {}\", \"age\": {}, \"gender\": \"male\"}}",
+                "{{\"name\": \"Person{}\", \"age\": {}, \"gender\": \"{}\"}}",
                 i,
                 //make random number between 18 and 90
-                rand::thread_rng().gen_range(18..=90)
+                rand::thread_rng().gen_range(18..=90),
+                if rand::thread_rng().gen_bool(0.05) { "male" } else { "female" }
             ),
         ) {
             println!("Error inserting value: {:?}", e);

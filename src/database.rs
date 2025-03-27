@@ -339,9 +339,7 @@ impl Database {
                 if unique {
                     Index::new_unique_hashmap()
                 } else {
-                    return Err(Error::IndexError(
-                        "Non unique indexes are not supported for strings".to_string(),
-                    ));
+                    Index::new_hashmap()
                 }
             }
             FieldType::Number => {

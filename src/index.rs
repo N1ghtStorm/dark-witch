@@ -71,6 +71,10 @@ impl Index {
         Self::BTreeUnique(BTreeMap::new())
     }
 
+    pub fn new_hashmap() -> Self {
+        Self::Hash(HashMap::new())
+    }
+
     pub fn add_string_unique(&mut self, key: Key, field_value: FieldValue) -> Result<(), Error> {
         if let Self::HashUnique(hashmap) = self {
             if hashmap.contains_key(&key) {
@@ -106,6 +110,14 @@ impl Index {
             Self::HashUnique(hashmap) => hashmap.get(&field_value),
             Self::BTreeUnique(_) => None,
             Self::Hash(_) => None,
+        }
+    }
+
+    pub fn get_hash_keys(&self, field_value: FieldValue) -> Option<&Vec<Key>> {
+        match self {
+            Self::Hash(hashmap) => hashmap.get(&field_value),
+            Self::HashUnique(_) => None,
+            Self::BTreeUnique(_) => None,
         }
     }
 }
