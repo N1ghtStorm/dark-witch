@@ -53,6 +53,10 @@ SELECT * FROM main WHERE name = 'John' AND age < 30;
 SELECT name, age FROM main WHERE name = 'John' AND age < 30;
 ```
 
+```sql
+SELECT name, age FROM main WHERE name = 'John' ORDER BY age;
+```
+
 ## Sending Request to local server
 
 ```bash
