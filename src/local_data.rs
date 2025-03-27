@@ -119,7 +119,11 @@ pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database
                 i,
                 //make random number between 18 and 90
                 rand::thread_rng().gen_range(18..=90),
-                if rand::thread_rng().gen_bool(0.05) { "male" } else { "female" }
+                if rand::thread_rng().gen_bool(0.05) {
+                    "male"
+                } else {
+                    "female"
+                }
             ),
         ) {
             println!("Error inserting value: {:?}", e);

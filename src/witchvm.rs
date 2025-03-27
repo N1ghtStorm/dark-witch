@@ -45,8 +45,8 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::{database::Database, index::Index};
 use crate::error::Error;
+use crate::{database::Database, index::Index};
 use tokio::time::{Duration, Instant};
 
 pub struct WitchVM {
@@ -159,34 +159,38 @@ impl WitchVM {
                             .map(|x| indexes.index_exists(&x.0))
                             .reduce(|x, y| x && y)
                             .unwrap_or(true);
-                    
+
                     if all_fields_indexed {
                         for (field, field_value) in string_fields_values.iter() {
                             if let Some(index) = indexes.get_index(field) {
                                 match index {
                                     Index::Hash(_) => {
-                                        let Some(keys) = index.get_hash_keys(field_value.clone()) else {
+                                        let Some(keys) = index.get_hash_keys(field_value.clone())
+                                        else {
                                             println!("Key for field '{}' not found", field);
                                             continue;
                                         };
                                         match filter {
                                             Filter::Condition(ref condition) => {
                                                 for key in keys {
-                                                    let json_value = database.get(storage_name.clone(), key.clone())?;
+                                                    let json_value = database
+                                                        .get(storage_name.clone(), key.clone())?;
                                                     if condition(key.clone(), json_value.clone()) {
                                                         self.output.push(json_value.clone());
                                                     }
                                                 }
                                             }
                                         }
-                                    },
+                                    }
                                     Index::HashUnique(_) => {
-                                        let Some(key) = index.get_unique_hash_key(field_value.clone())
+                                        let Some(key) =
+                                            index.get_unique_hash_key(field_value.clone())
                                         else {
                                             println!("Key for field '{}' not found", field);
                                             continue;
                                         };
-                                        let json_value = database.get(storage_name.clone(), key.clone())?;
+                                        let json_value =
+                                            database.get(storage_name.clone(), key.clone())?;
                                         match filter {
                                             Filter::Condition(ref condition) => {
                                                 if condition(key.clone(), json_value.clone()) {
@@ -194,8 +198,8 @@ impl WitchVM {
                                                 }
                                             }
                                         }
-                                    },
-                                    Index::BTreeUnique(_) => {},
+                                    }
+                                    Index::BTreeUnique(_) => {}
                                 }
                             }
 
