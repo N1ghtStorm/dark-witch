@@ -56,8 +56,10 @@ pub enum Index {
     // key - key
     // value - list of ids
     BTreeUnique(BTreeMap<i64, Key>),
-    // Index for strings
+    // Uniqe Index for strings
     HashUnique(HashMap<FieldValue, Key>),
+    // Index for strings
+    Hash(HashMap<FieldValue, Vec<Key>>)
 }
 
 impl Index {
@@ -89,10 +91,18 @@ impl Index {
         Ok(())
     }
 
-    pub fn get_hash_key(&self, field_value: FieldValue) -> Option<&Key> {
+    pub fn add_string(&mut self, key: Key, field_value: FieldValue) -> Result<(), Error> {
+        if let Self::Hash(hashmap) = self {
+            hashmap.entry(field_value).or_insert_with(Vec::new).push(key);
+        }
+        Ok(())
+    }
+
+    pub fn get_unique_hash_key(&self, field_value: FieldValue) -> Option<&Key> {
         match self {
             Self::HashUnique(hashmap) => hashmap.get(&field_value),
             Self::BTreeUnique(_) => None,
+            Self::Hash(_) => None,
         }
     }
 }

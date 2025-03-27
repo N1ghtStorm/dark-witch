@@ -160,7 +160,12 @@ impl Database {
                                     }
                                     hashmap.insert(field_str.to_string(), key.clone());
                                 }
-                            }
+                            },
+                            Index::Hash(hashmap) => {
+                                if let Some(field_str) = field_value.as_str() {
+                                    hashmap.entry(field_str.to_string()).or_insert_with(Vec::new).push(key.clone());
+                                }
+                            },
                             Index::BTreeUnique(btreemap) => {
                                 // btreemap.insert(field_value.as_i64().unwrap(), key.clone());
                                 if let Some(field_num) = field_value.as_i64() {
@@ -172,7 +177,7 @@ impl Database {
                                     }
                                     btreemap.insert(field_num, key.clone());
                                 }
-                            }
+                            },
                         }
                     }
                 }
@@ -213,12 +218,20 @@ impl Database {
                                 if let Some(field_str) = field_value.as_str() {
                                     hashmap.remove(&field_str.to_string());
                                 }
-                            }
+                            },
+                            Index::Hash(hashmap) => {
+                                if let Some(field_str) = field_value.as_str() {
+                                    if let Some(keys) = hashmap.get_mut(&field_str.to_string()) {
+                                        if let Some(i) = keys.iter().position(|k| *k == key) {
+                                        keys.remove(i);
+                                    }
+                                }}
+                            },
                             Index::BTreeUnique(btreemap) => {
                                 if let Some(field_num) = field_value.as_i64() {
                                     btreemap.remove(&field_num);
                                 }
-                            }
+                            },
                         }
                     }
                 }
@@ -269,6 +282,11 @@ impl Database {
                                         )));
                                     }
                                     hashmap.insert(field_str.to_string(), key.clone());
+                                }
+                            }
+                            Index::Hash(hashmap) => {
+                                if let Some(field_str) = field_value.as_str() {
+                                    hashmap.entry(field_str.to_string()).or_insert_with(Vec::new).push(key.clone());
                                 }
                             }
                             Index::BTreeUnique(btreemap) => {
@@ -341,6 +359,15 @@ impl Database {
                             if let Some(field_str) = field_value.as_str() {
                                 index
                                     .add_string_unique(key.clone(), field_str.to_string())
+                                    .map_err(|e| {
+                                        Error::IndexError(format!("Error creating index: {:?}", e))
+                                    })?;
+                            }
+                        }
+                        Index::Hash(_) => {
+                            if let Some(field_str) = field_value.as_str() {
+                                index
+                                    .add_string(key.clone(), field_str.to_string())
                                     .map_err(|e| {
                                         Error::IndexError(format!("Error creating index: {:?}", e))
                                     })?;

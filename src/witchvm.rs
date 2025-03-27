@@ -163,7 +163,7 @@ impl WitchVM {
                     if all_fields_indexed {
                         for (field, field_value) in string_fields_values.iter() {
                             if let Some(index) = indexes.get_index(field) {
-                                let Some(key) = index.get_hash_key(field_value.clone()) else {
+                                let Some(key) = index.get_unique_hash_key(field_value.clone()) else {
                                     println!("Key for field '{}' not found", field);
                                     continue;
                                 };
