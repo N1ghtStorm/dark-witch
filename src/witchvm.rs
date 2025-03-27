@@ -146,19 +146,32 @@ impl WitchVM {
 
                     let indexes = &database.get_storage(storage_name.clone())?.indexes;
 
+                    let mut all_fields_indexed = false;
+
                     // Check if all fields are indexed
                     // if not - then full scan
                     // not sure it's correct
-                    let all_fields_indexed = string_fields_values
+                    let maybe_string_fields_indexed = string_fields_values
                         .iter()
                         .map(|x| indexes.index_exists(&x.0))
-                        .reduce(|x, y| x && y)
-                        .unwrap_or(true)
-                        && number_fields_values
-                            .iter()
-                            .map(|x| indexes.index_exists(&x.0))
-                            .reduce(|x, y| x && y)
-                            .unwrap_or(true);
+                        .reduce(|x, y| x && y);
+
+                    let maybe_num_fields_indexed = number_fields_values
+                        .iter()
+                        .map(|x| indexes.index_exists(&x.0))
+                        .reduce(|x, y| x && y);
+                    // .unwrap_or(if number_fields_values.len() > 1 { true } else { false });
+
+                    if string_fields_values.len() > 0 && number_fields_values.len() > 0 {
+                        all_fields_indexed = maybe_string_fields_indexed.unwrap_or(false)
+                            && maybe_num_fields_indexed.unwrap_or(false);
+                    } else if string_fields_values.len() > 0 && number_fields_values.len() == 0 {
+                        all_fields_indexed = maybe_string_fields_indexed.unwrap_or(false);
+                    } else if string_fields_values.len() == 0 && number_fields_values.len() > 0 {
+                        all_fields_indexed = maybe_num_fields_indexed.unwrap_or(false);
+                    }
+
+                    println!("All fields indexed: {}", all_fields_indexed);
 
                     if all_fields_indexed {
                         for (field, field_value) in string_fields_values.iter() {
@@ -246,19 +259,18 @@ impl WitchVM {
                     explain.push(ExplainStep::SortOutput);
                 }
                 Instruction::SetLimit { count } => {
-                    println!("Output count {}", self.output.len());
                     if count < self.output.len() as u64 {
                         self.output = self.output[0..count as usize].to_vec();
-                        explain.push(ExplainStep::SetLimit);
                     }
+                    explain.push(ExplainStep::Limit);
                 }
                 Instruction::SetOffset { count } => {
                     if count < self.output.len() as u64 {
                         self.output = self.output[count as usize..].to_vec();
-                        explain.push(ExplainStep::SetOffset);
+                        explain.push(ExplainStep::Offset);
                     } else {
                         self.output = Vec::new();
-                        explain.push(ExplainStep::SetOffset);
+                        explain.push(ExplainStep::Offset);
                     }
                 }
                 _ => (),
@@ -326,6 +338,6 @@ pub enum ExplainStep {
     IndexScan { time: Duration },
     MapOutput,
     SortOutput,
-    SetLimit,
-    SetOffset,
+    Limit,
+    Offset,
 }
