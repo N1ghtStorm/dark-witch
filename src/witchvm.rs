@@ -156,19 +156,21 @@ impl WitchVM {
                         .map(|x| indexes.index_exists(&x.0))
                         .reduce(|x, y| x && y);
 
-                    let maybe_num_fields_indexed = number_fields_values
-                        .iter()
-                        .map(|x| indexes.index_exists(&x.0))
-                        .reduce(|x, y| x && y);
-                    // .unwrap_or(if number_fields_values.len() > 1 { true } else { false });
+                    // TODO: implement Number indexes not supported yet
+                    // let maybe_num_fields_indexed = number_fields_values
+                    //     .iter()
+                    //     .map(|x| indexes.index_exists(&x.0))
+                    //     .reduce(|x, y| x && y);
 
                     if string_fields_values.len() > 0 && number_fields_values.len() > 0 {
                         all_fields_indexed = maybe_string_fields_indexed.unwrap_or(false)
-                            && maybe_num_fields_indexed.unwrap_or(false);
+                        // TODO: implement Number indexes not supported yet
+                            // && maybe_num_fields_indexed.unwrap_or(false);
                     } else if string_fields_values.len() > 0 && number_fields_values.len() == 0 {
                         all_fields_indexed = maybe_string_fields_indexed.unwrap_or(false);
                     } else if string_fields_values.len() == 0 && number_fields_values.len() > 0 {
-                        all_fields_indexed = maybe_num_fields_indexed.unwrap_or(false);
+                        // TODO: implement Number indexes not supported yet
+                        // all_fields_indexed = maybe_num_fields_indexed.unwrap_or(false);
                     }
 
                     println!("All fields indexed: {}", all_fields_indexed);
