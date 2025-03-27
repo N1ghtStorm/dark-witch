@@ -603,7 +603,7 @@ impl CodeGenerator {
                 // Handle WHERE clause if present
                 let predicate = match where_clause {
                     Some(condition) => self.generate_condition(condition)?,
-                    None => Box::new(|_: String, _: String| true),
+                    None => Box::new(| _: String| true),
                 };
 
                 let (string_fields_values, number_fields_values) = match where_clause {
@@ -744,7 +744,7 @@ impl CodeGenerator {
     fn generate_condition(
         &mut self,
         condition: &AstNode,
-    ) -> Result<Box<dyn Fn(String, String) -> bool + 'static>, Error> {
+    ) -> Result<Box<dyn Fn(String) -> bool + 'static>, Error> {
         match condition {
             AstNode::BinaryOp {
                 left,
@@ -755,15 +755,15 @@ impl CodeGenerator {
                     "AND" => {
                         let left_pred = self.generate_condition(left)?;
                         let right_pred = self.generate_condition(right)?;
-                        Ok(Box::new(move |key: String, value: String| {
-                            left_pred(key.clone(), value.clone()) && right_pred(key, value)
+                        Ok(Box::new(move |value: String| {
+                            left_pred( value.clone()) && right_pred( value)
                         }))
                     }
                     "OR" => {
                         let left_pred = self.generate_condition(left)?;
                         let right_pred = self.generate_condition(right)?;
-                        Ok(Box::new(move |key: String, value: String| {
-                            left_pred(key.clone(), value.clone()) || right_pred(key, value)
+                        Ok(Box::new(move |value: String| {
+                            left_pred(value.clone()) || right_pred(value)
                         }))
                     }
                     _ => {
@@ -775,7 +775,7 @@ impl CodeGenerator {
                                     LiteralValue::Number(n) => {
                                         let operator = operator.clone();
                                         let n = n.clone();
-                                        Ok(Box::new(move |_, value: String| {
+                                        Ok(Box::new(move | value: String| {
                                             if let Ok(json) =
                                                 serde_json::from_str::<serde_json::Value>(&value)
                                             {
@@ -795,7 +795,7 @@ impl CodeGenerator {
                                     LiteralValue::String(s) => {
                                         let operator = operator.clone();
                                         let s = s.clone();
-                                        Ok(Box::new(move |_, value: String| {
+                                        Ok(Box::new(move |value: String| {
                                             if let Ok(json) =
                                                 serde_json::from_str::<serde_json::Value>(&value)
                                             {

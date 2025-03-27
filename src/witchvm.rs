@@ -165,7 +165,7 @@ impl WitchVM {
                     if string_fields_values.len() > 0 && number_fields_values.len() > 0 {
                         all_fields_indexed = maybe_string_fields_indexed.unwrap_or(false)
                         // TODO: implement Number indexes not supported yet
-                            // && maybe_num_fields_indexed.unwrap_or(false);
+                        // && maybe_num_fields_indexed.unwrap_or(false);
                     } else if string_fields_values.len() > 0 && number_fields_values.len() == 0 {
                         all_fields_indexed = maybe_string_fields_indexed.unwrap_or(false);
                     } else if string_fields_values.len() == 0 && number_fields_values.len() > 0 {
@@ -190,7 +190,7 @@ impl WitchVM {
                                                 for key in keys {
                                                     let json_value = database
                                                         .get(storage_name.clone(), key.clone())?;
-                                                    if condition(key.clone(), json_value.clone()) {
+                                                    if condition(json_value.clone()) {
                                                         self.output.push(json_value.clone());
                                                     }
                                                 }
@@ -208,13 +208,17 @@ impl WitchVM {
                                             database.get(storage_name.clone(), key.clone())?;
                                         match filter {
                                             Filter::Condition(ref condition) => {
-                                                if condition(key.clone(), json_value.clone()) {
+                                                if condition(json_value.clone()) {
                                                     self.output.push(json_value.clone());
                                                 }
                                             }
                                         }
                                     }
-                                    Index::BTreeUnique(_) => {}
+                                    Index::BTreeUnique(_) => {
+                                        return Err(Error::ExecutionError(
+                                            "BTreeUnique indexes are for numbers only".to_string(),
+                                        ));
+                                    }
                                 }
                             }
 
@@ -229,7 +233,7 @@ impl WitchVM {
                         for (key, value) in storage.data.iter() {
                             match filter {
                                 Filter::Condition(ref condition) => {
-                                    if condition(key.clone(), value.clone()) {
+                                    if condition(value.clone()) {
                                         self.output.push(value.clone());
                                     }
                                 }
@@ -330,7 +334,7 @@ pub enum Instruction {
 }
 
 pub enum Filter {
-    Condition(Box<dyn Fn(String, String) -> bool>),
+    Condition(Box<dyn Fn(String) -> bool>),
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -395,4 +395,43 @@ impl Database {
         storage.indexes.create_index(field_name, index);
         Ok(())
     }
+
+    pub fn unique_string_index_search(
+        &self,
+        storage_name: String,
+        field_name: String,
+        predicate: Box<dyn Fn(String) -> bool>,
+    ) -> Result<Vec<String>, Error> {
+        let storage = self
+            .storages
+            .iter()
+            .find(|s| s.name.as_str() == storage_name)
+            .ok_or(Error::StorageError(format!(
+                "Storage with name '{}' not found",
+                storage_name
+            )))?;
+
+        let index = storage
+            .indexes
+            .get_index(&field_name)
+            .ok_or(Error::IndexError(format!(
+                "Index with name '{}' not found in storage '{}'",
+                field_name, storage_name
+            )))?;
+
+        let result = match index {
+            Index::HashUnique(hashmap) => hashmap
+                .iter()
+                .filter(|(_, key)| predicate((*key).clone()))
+                .map(|(_, key)| key.clone())
+                .collect(),
+            _ => {
+                return Err(Error::IndexError(
+                    "Index is not a unique string index".to_string(),
+                ))
+            }
+        };
+
+        Ok(result)
+    }
 }
