@@ -57,6 +57,8 @@ pub enum Token {
     Or,
     Order,
     By,
+    Limit,
+    Offset,
 
     // Symbols
     Asterisk,
@@ -228,6 +230,8 @@ impl Lexer {
                         "OR" => Token::Or,
                         "ORDER" => Token::Order,
                         "BY" => Token::By,
+                        "LIMIT" => Token::Limit,
+                        "OFFSET" => Token::Offset,
                         _ => Token::Identifier(identifier),
                     }
                 }
@@ -264,6 +268,8 @@ pub enum AstNode {
         from: String,
         where_clause: Option<Box<AstNode>>,
         order_by: Option<String>,
+        limit: Option<i64>,
+        offset: Option<i64>,
     },
     BinaryOp {
         left: Box<AstNode>,
@@ -408,11 +414,51 @@ impl Parser {
             None
         };
 
+        // Parse LIMIT clause (if present)
+        let limit = if self.peek() == Some(&Token::Limit) {
+            self.advance();
+            match self.peek() {
+                Some(Token::Number(n)) => {
+                    let limit = *n as i64;
+                    self.advance();
+                    Some(limit)
+                }
+                _ => {
+                    return Err(Error::SyntaxError(
+                        "Expected number after LIMIT".to_string(),
+                    ))
+                }
+            }
+        } else {
+            None
+        };
+
+        // Parse OFFSET clause (if present)
+        let offset = if self.peek() == Some(&Token::Offset) {
+            self.advance();
+            match self.peek() {
+                Some(Token::Number(n)) => {
+                    let offset = *n as i64;
+                    self.advance();
+                    Some(offset)
+                }
+                _ => {
+                    return Err(Error::SyntaxError(
+                        "Expected number after OFFSET".to_string(),
+                    ))
+                }
+            }
+        } else {
+            None
+        };
+
         Ok(AstNode::Select {
             fields,
             from: table_name,
             where_clause,
             order_by,
+            limit,
+            offset,
         })
     }
 
@@ -548,6 +594,8 @@ impl CodeGenerator {
                 from,
                 where_clause,
                 order_by,
+                limit,
+                offset,
             } => {
                 // Load the table
                 self.emit(Instruction::UseStorage { name: from.clone() });
@@ -673,6 +721,18 @@ impl CodeGenerator {
                         field: order_by.clone(),
                     };
                     self.emit(instruction);
+                }
+
+                if let Some(offset_val) = offset {
+                    self.emit(Instruction::SetOffset {
+                        count: *offset_val as u64,
+                    });
+                }
+
+                if let Some(limit_val) = limit {
+                    self.emit(Instruction::SetLimit {
+                        count: *limit_val as u64,
+                    });
                 }
 
                 Ok(())

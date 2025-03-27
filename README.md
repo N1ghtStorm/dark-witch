@@ -57,6 +57,10 @@ SELECT name, age FROM main WHERE name = 'John' AND age < 30;
 SELECT name, age FROM main WHERE name = 'John' ORDER BY age;
 ```
 
+```sql
+SELECT name, age FROM main WHERE name = 'John' ORDER BY age LIMIT 10 OFFSET 20;
+```
+
 ## Sending Request to local server
 
 ```bash

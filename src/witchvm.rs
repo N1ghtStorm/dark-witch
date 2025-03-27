@@ -245,6 +245,22 @@ impl WitchVM {
                     });
                     explain.push(ExplainStep::SortOutput);
                 }
+                Instruction::SetLimit { count } => {
+                    println!("Output count {}", self.output.len());
+                    if count < self.output.len() as u64 {
+                        self.output = self.output[0..count as usize].to_vec();
+                        explain.push(ExplainStep::SetLimit);
+                    }
+                }
+                Instruction::SetOffset { count } => {
+                    if count < self.output.len() as u64 {
+                        self.output = self.output[count as usize..].to_vec();
+                        explain.push(ExplainStep::SetOffset);
+                    } else {
+                        self.output = Vec::new();
+                        explain.push(ExplainStep::SetOffset);
+                    }
+                }
                 _ => (),
             }
         }
@@ -272,6 +288,12 @@ pub enum Instruction {
     },
     SortOutput {
         field: String,
+    },
+    SetLimit {
+        count: u64,
+    },
+    SetOffset {
+        count: u64,
     },
     Get {
         key: String,
@@ -304,4 +326,6 @@ pub enum ExplainStep {
     IndexScan { time: Duration },
     MapOutput,
     SortOutput,
+    SetLimit,
+    SetOffset,
 }
