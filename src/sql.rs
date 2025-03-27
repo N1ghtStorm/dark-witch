@@ -55,6 +55,8 @@ pub enum Token {
     Where,
     And,
     Or,
+    Order,
+    By,
 
     // Symbols
     Asterisk,
@@ -224,6 +226,8 @@ impl Lexer {
                         "WHERE" => Token::Where,
                         "AND" => Token::And,
                         "OR" => Token::Or,
+                        "ORDER" => Token::Order,
+                        "BY" => Token::By,
                         _ => Token::Identifier(identifier),
                     }
                 }
@@ -259,6 +263,7 @@ pub enum AstNode {
         fields: Vec<FieldExpression>,
         from: String,
         where_clause: Option<Box<AstNode>>,
+        order_by: Option<String>,
     },
     BinaryOp {
         left: Box<AstNode>,
@@ -379,10 +384,31 @@ impl Parser {
             None
         };
 
+        // Parse ORDER BY clause (if present)
+        let order_by = if self.peek() == Some(&Token::Order) {
+            self.advance();
+            if self.peek() != Some(&Token::By) {
+                return Err(Error::SyntaxError("Expected BY after ORDER".to_string()));
+            }
+            self.advance();
+            
+            match self.peek() {
+                Some(Token::Identifier(name)) => {
+                    let name = name.clone();
+                    self.advance();
+                    Some(name)
+                }
+                _ => return Err(Error::SyntaxError("Expected column name after ORDER BY".to_string())),
+            }
+        } else {
+            None
+        };
+
         Ok(AstNode::Select {
             fields,
             from: table_name,
             where_clause,
+            order_by,
         })
     }
 
@@ -517,6 +543,7 @@ impl CodeGenerator {
                 fields,
                 from,
                 where_clause,
+                order_by,
             } => {
                 // Load the table
                 self.emit(Instruction::UseStorage { name: from.clone() });
