@@ -601,9 +601,14 @@ impl CodeGenerator {
                 self.emit(Instruction::UseStorage { name: from.clone() });
 
                 // Handle WHERE clause if present
-                let predicate = match where_clause {
-                    Some(condition) => self.generate_condition(condition)?,
-                    None => Box::new(| _: String| true),
+                let full_scan_predicate = match where_clause {
+                    Some(condition) => self.generate_full_scan_condition(condition)?,
+                    None => Box::new(|_: String| true),
+                };
+
+                let index_scan_predicate = match where_clause {
+                    Some(condition) => self.generate_index_scan_condition(condition)?,
+                    None => Box::new(|_: String| true),
                 };
 
                 let (string_fields_values, number_fields_values) = match where_clause {
@@ -623,7 +628,8 @@ impl CodeGenerator {
                 };
 
                 self.emit(Instruction::Scan {
-                    filter: crate::witchvm::Filter::Condition(predicate),
+                    index_filter: crate::witchvm::Filter::Condition(index_scan_predicate),
+                    full_scan_filter: crate::witchvm::Filter::Condition(full_scan_predicate),
                     string_fields_values,
                     number_fields_values,
                 });
@@ -741,7 +747,7 @@ impl CodeGenerator {
         }
     }
 
-    fn generate_condition(
+    fn generate_full_scan_condition(
         &mut self,
         condition: &AstNode,
     ) -> Result<Box<dyn Fn(String) -> bool + 'static>, Error> {
@@ -753,15 +759,15 @@ impl CodeGenerator {
             } => {
                 match operator.as_str() {
                     "AND" => {
-                        let left_pred = self.generate_condition(left)?;
-                        let right_pred = self.generate_condition(right)?;
+                        let left_pred = self.generate_full_scan_condition(left)?;
+                        let right_pred = self.generate_full_scan_condition(right)?;
                         Ok(Box::new(move |value: String| {
-                            left_pred( value.clone()) && right_pred( value)
+                            left_pred(value.clone()) && right_pred(value)
                         }))
                     }
                     "OR" => {
-                        let left_pred = self.generate_condition(left)?;
-                        let right_pred = self.generate_condition(right)?;
+                        let left_pred = self.generate_full_scan_condition(left)?;
+                        let right_pred = self.generate_full_scan_condition(right)?;
                         Ok(Box::new(move |value: String| {
                             left_pred(value.clone()) || right_pred(value)
                         }))
@@ -775,7 +781,7 @@ impl CodeGenerator {
                                     LiteralValue::Number(n) => {
                                         let operator = operator.clone();
                                         let n = n.clone();
-                                        Ok(Box::new(move | value: String| {
+                                        Ok(Box::new(move |value: String| {
                                             if let Ok(json) =
                                                 serde_json::from_str::<serde_json::Value>(&value)
                                             {
@@ -794,7 +800,7 @@ impl CodeGenerator {
                                     }
                                     LiteralValue::String(s) => {
                                         let operator = operator.clone();
-                                        let s = s.clone();
+                                        let s: String = s.clone();
                                         Ok(Box::new(move |value: String| {
                                             if let Ok(json) =
                                                 serde_json::from_str::<serde_json::Value>(&value)
@@ -811,6 +817,7 @@ impl CodeGenerator {
                                                 }
                                             }
                                             false
+
                                         }))
                                     }
                                 }
@@ -823,6 +830,97 @@ impl CodeGenerator {
             _ => Err(Error::SyntaxError("Unhandled Condition".to_string())),
         }
     }
+
+
+    fn generate_index_scan_condition(
+        &mut self,
+        condition: &AstNode,
+    ) -> Result<Box<dyn Fn(String) -> bool + 'static>, Error> {
+        match condition {
+            AstNode::BinaryOp {
+                left,
+                operator,
+                right,
+            } => {
+                match operator.as_str() {
+                    "AND" => {
+                        let left_pred = self.generate_index_scan_condition(left)?;
+                        let right_pred = self.generate_index_scan_condition(right)?;
+                        Ok(Box::new(move |value: String| {
+                            left_pred(value.clone()) && right_pred(value)
+                        }))
+                    }
+                    "OR" => {
+                        let left_pred = self.generate_index_scan_condition(left)?;
+                        let right_pred = self.generate_index_scan_condition(right)?;
+                        Ok(Box::new(move |value: String| {
+                            left_pred(value.clone()) || right_pred(value)
+                        }))
+                    }
+                    _ => {
+                        // Handle comparison operators
+                        match (&**left, &**right) {
+                            (AstNode::Column(_), AstNode::Literal(lit)) => {
+                                match lit {
+                                    LiteralValue::Number(n) => {
+                                        let operator = operator.clone();
+                                        let n = n.clone();
+                                        Ok(Box::new(move |value: String| {
+                                            // if let Ok(json) =
+                                            //     serde_json::from_str::<serde_json::Value>(&value)
+                                            // {
+                                            //     if let Some(field) =
+                                            //         json.get(col.as_str()).and_then(|v| v.as_i64())
+                                            //     {
+                                            //         return num_cond(
+                                            //             field,
+                                            //             operator.clone(),
+                                            //             n as i64,
+                                            //         );
+                                            //     }
+                                            // }
+                                            // false
+                                            match value.parse::<i64>() {
+                                                Ok(num_val) => {
+                                                    return num_cond(
+                                                        num_val,
+                                                        operator.clone(),
+                                                        n as i64,
+                                                    );
+                                                }
+                                                Err(_) => {
+                                                    return false;
+                                                }
+                                            }
+                                            // return num_cond(
+                                            //     field,
+                                            //     operator.clone(),
+                                            //     n as i64,
+                                            // );
+                                        }))
+                                    }
+                                    LiteralValue::String(s) => {
+                                        let operator = operator.clone();
+                                        let s: String = s.clone();
+                                        Ok(Box::new(move |value: String| {
+                                            return str_cond(
+                                                value.to_string(),
+                                                operator.clone(),
+                                                s.clone(),
+                                            );
+                                        }))
+                                    }
+                                }
+                            }
+                            _ => Err(Error::SyntaxError("Unhandled Condition".to_string())),
+                        }
+                    }
+                }
+            }
+            _ => Err(Error::SyntaxError("Unhandled Condition".to_string())),
+        }
+    }
+
 
     fn get_where_lefts_rights(
         &self,

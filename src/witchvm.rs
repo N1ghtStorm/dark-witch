@@ -133,7 +133,8 @@ impl WitchVM {
                     explain.push(ExplainStep::SetStorage(name));
                 }
                 Instruction::Scan {
-                    filter,
+                    index_filter,
+                    full_scan_filter,
                     string_fields_values,
                     number_fields_values,
                 } => {
@@ -146,7 +147,7 @@ impl WitchVM {
 
                     let indexes = &database.get_storage(storage_name.clone())?.indexes;
 
-                    let mut all_fields_indexed = false;
+                    let mut start_index_search = false;
 
                     // Check if all fields are indexed
                     // if not - then full scan
@@ -163,56 +164,37 @@ impl WitchVM {
                     //     .reduce(|x, y| x && y);
 
                     if string_fields_values.len() > 0 && number_fields_values.len() > 0 {
-                        all_fields_indexed = maybe_string_fields_indexed.unwrap_or(false)
+                        start_index_search = maybe_string_fields_indexed.unwrap_or(false)
                         // TODO: implement Number indexes not supported yet
                         // && maybe_num_fields_indexed.unwrap_or(false);
                     } else if string_fields_values.len() > 0 && number_fields_values.len() == 0 {
-                        all_fields_indexed = maybe_string_fields_indexed.unwrap_or(false);
+                        start_index_search = maybe_string_fields_indexed.unwrap_or(false);
                     } else if string_fields_values.len() == 0 && number_fields_values.len() > 0 {
                         // TODO: implement Number indexes not supported yet
                         // all_fields_indexed = maybe_num_fields_indexed.unwrap_or(false);
                     }
 
-                    println!("All fields indexed: {}", all_fields_indexed);
+                    println!("All fields indexed: {}", start_index_search);
 
-                    if all_fields_indexed {
-                        for (field, field_value) in string_fields_values.iter() {
+                    if start_index_search {
+                        for (field, _) in string_fields_values.iter() {
                             if let Some(index) = indexes.get_index(field) {
                                 match index {
                                     Index::Hash(_) => {
-                                        let Some(keys) = index.get_hash_keys(field_value.clone())
-                                        else {
-                                            println!("Key for field '{}' not found", field);
-                                            continue;
-                                        };
-                                        match filter {
-                                            Filter::Condition(ref condition) => {
-                                                for key in keys {
-                                                    let json_value = database
-                                                        .get(storage_name.clone(), key.clone())?;
-                                                    if condition(json_value.clone()) {
-                                                        self.output.push(json_value.clone());
-                                                    }
-                                                }
-                                            }
-                                        }
+                                        let string_values = database.string_index_search(
+                                            storage_name.clone(),
+                                            index,
+                                            index_filter.condition(),
+                                        )?;
+                                        self.output.extend(string_values);
                                     }
                                     Index::HashUnique(_) => {
-                                        let Some(key) =
-                                            index.get_unique_hash_key(field_value.clone())
-                                        else {
-                                            println!("Key for field '{}' not found", field);
-                                            continue;
-                                        };
-                                        let json_value =
-                                            database.get(storage_name.clone(), key.clone())?;
-                                        match filter {
-                                            Filter::Condition(ref condition) => {
-                                                if condition(json_value.clone()) {
-                                                    self.output.push(json_value.clone());
-                                                }
-                                            }
-                                        }
+                                        let string_values = database.string_index_search(
+                                            storage_name.clone(),
+                                            index,
+                                            index_filter.condition(),
+                                        )?;
+                                        self.output.extend(string_values);
                                     }
                                     Index::BTreeUnique(_) => {
                                         return Err(Error::ExecutionError(
@@ -230,8 +212,8 @@ impl WitchVM {
                         });
                     } else {
                         let storage = database.get_storage(storage_name)?;
-                        for (key, value) in storage.data.iter() {
-                            match filter {
+                        for (_, value) in storage.data.iter() {
+                            match full_scan_filter {
                                 Filter::Condition(ref condition) => {
                                     if condition(value.clone()) {
                                         self.output.push(value.clone());
@@ -297,7 +279,8 @@ pub enum Instruction {
         filter: Filter,
     },
     Scan {
-        filter: Filter,
+        index_filter: Filter,
+        full_scan_filter: Filter,
         string_fields_values: Vec<(String, String)>,
         number_fields_values: Vec<(String, f64)>,
     },
@@ -335,6 +318,14 @@ pub enum Instruction {
 
 pub enum Filter {
     Condition(Box<dyn Fn(String) -> bool>),
+}
+
+impl Filter {
+    pub fn condition(&self) -> &Box<dyn Fn(String) -> bool> {
+        match self {
+            Filter::Condition(condition) => condition,
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]

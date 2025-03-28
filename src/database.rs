@@ -396,11 +396,11 @@ impl Database {
         Ok(())
     }
 
-    pub fn unique_string_index_search(
+    pub fn string_index_search(
         &self,
         storage_name: String,
-        field_name: String,
-        predicate: Box<dyn Fn(String) -> bool>,
+        index: &Index,
+        predicate: &Box<dyn Fn(String) -> bool>,
     ) -> Result<Vec<String>, Error> {
         let storage = self
             .storages
@@ -411,20 +411,36 @@ impl Database {
                 storage_name
             )))?;
 
-        let index = storage
-            .indexes
-            .get_index(&field_name)
-            .ok_or(Error::IndexError(format!(
-                "Index with name '{}' not found in storage '{}'",
-                field_name, storage_name
-            )))?;
-
         let result = match index {
-            Index::HashUnique(hashmap) => hashmap
-                .iter()
-                .filter(|(_, key)| predicate((*key).clone()))
-                .map(|(_, key)| key.clone())
-                .collect(),
+            Index::HashUnique(hashmap) => {
+                let keys = hashmap
+                    .iter()
+                    .filter(|(field, _)| predicate((*field).clone()))
+                    .map(|(_, key)| key.clone())
+                    .collect::<Vec<String>>();
+
+                // println!("Keys: {:?}", keys);
+
+                keys.iter()
+                    .map(|x| storage.data.get(x))
+                    .filter(|x| x.is_some())
+                    .map(|x| x.unwrap_or(&"{}".to_string()).clone())
+                    .collect::<Vec<String>>()
+            }
+            Index::Hash(hashmap) => {
+                let keys = hashmap
+                    .iter()
+                    .filter(|(field, _)| predicate((*field).clone()))
+                    .map(|(_, key)| key.clone())
+                    .flatten()
+                    .collect::<Vec<String>>();
+
+                keys.iter()
+                    .map(|x| storage.data.get(x))
+                    .filter(|x| x.is_some())
+                    .map(|x| x.unwrap_or(&"{}".to_string()).clone())
+                    .collect::<Vec<String>>()
+            }
             _ => {
                 return Err(Error::IndexError(
                     "Index is not a unique string index".to_string(),

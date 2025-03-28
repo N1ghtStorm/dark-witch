@@ -110,26 +110,26 @@ pub async fn fill_database(database: Arc<Mutex<Database>>) -> Arc<Mutex<Database
         panic!("Failed to insert value");
     }
 
-    // for i in 20..100000 {
-    //     if let Err(e) = database.lock().await.insert(
-    //         "main".to_string(),
-    //         format!("person{}", i),
-    //         format!(
-    //             "{{\"name\": \"Person{}\", \"age\": {}, \"gender\": \"{}\"}}",
-    //             i,
-    //             //make random number between 18 and 90
-    //             rand::thread_rng().gen_range(18..=90),
-    //             if rand::thread_rng().gen_bool(0.05) {
-    //                 "male"
-    //             } else {
-    //                 "female"
-    //             }
-    //         ),
-    //     ) {
-    //         println!("Error inserting value: {:?}", e);
-    //         panic!("Failed to insert value");
-    //     }
-    // }
+    for i in 20..100000 {
+        if let Err(e) = database.lock().await.insert(
+            "main".to_string(),
+            format!("person{}", i),
+            format!(
+                "{{\"name\": \"Person{}\", \"age\": {}, \"gender\": \"{}\"}}",
+                i,
+                //make random number between 18 and 90
+                rand::thread_rng().gen_range(18..=90),
+                if rand::thread_rng().gen_bool(0.05) {
+                    "male"
+                } else {
+                    "female"
+                }
+            ),
+        ) {
+            println!("Error inserting value: {:?}", e);
+            panic!("Failed to insert value");
+        }
+    }
 
     database
 }
