@@ -817,7 +817,6 @@ impl CodeGenerator {
                                                 }
                                             }
                                             false
-
                                         }))
                                     }
                                 }
@@ -830,7 +829,6 @@ impl CodeGenerator {
             _ => Err(Error::SyntaxError("Unhandled Condition".to_string())),
         }
     }
-
 
     fn generate_index_scan_condition(
         &mut self,
@@ -920,7 +918,6 @@ impl CodeGenerator {
             _ => Err(Error::SyntaxError("Unhandled Condition".to_string())),
         }
     }
-
 
     fn get_where_lefts_rights(
         &self,
