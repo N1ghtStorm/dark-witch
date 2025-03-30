@@ -43,7 +43,7 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
-use crate::database::Database;
+use super::database::Database;
 use rand::Rng;
 use std::sync::Arc;
 use tokio::sync::Mutex;

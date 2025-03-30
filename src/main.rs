@@ -44,17 +44,10 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 mod common;
-mod database;
-mod error;
-mod index;
-mod query_handler;
 mod server;
 mod server_models;
-mod sql;
-mod witchvm;
+mod kv;
 
-#[cfg(feature = "local")]
-mod local_data;
 
 #[tokio::main]
 async fn main() {

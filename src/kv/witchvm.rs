@@ -45,8 +45,8 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::error::Error;
-use crate::{database::Database, index::Index};
+use crate::kv::error::Error;
+use crate::kv::{database::Database, index::Index};
 use tokio::time::{Duration, Instant};
 
 pub struct WitchVM {

@@ -43,8 +43,8 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
-use crate::database::Database;
-use crate::query_handler::{explain_query, handle_query};
+use crate::kv::database::Database;
+use crate::kv::query_handler::{explain_query, handle_query};
 use crate::server_models::*;
 use axum::routing::{delete, post, put};
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
@@ -59,7 +59,7 @@ pub async fn run_witch_server() {
 
     #[cfg(feature = "local")]
     {
-        crate::local_data::fill_database(database.clone()).await;
+        crate::kv::local_data::fill_database(database.clone()).await;
     }
     // build our application with a single route
     let app = Router::new()

@@ -44,8 +44,8 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 use crate::common::FieldType;
-use crate::error::Error;
-use crate::index::{Index, IndexList};
+use super::error::Error;
+use super::index::{Index, IndexList};
 use serde_json;
 use std::collections::HashMap;
 

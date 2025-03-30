@@ -43,8 +43,10 @@
 // MMMMMMMMMMMMdy+/---``---:+sdMMMMMMMMMMMM
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
-use crate::error::Error;
-use crate::witchvm::Instruction;
+use crate::kv::error::Error;
+use crate::kv::witchvm::Instruction;
+
+use super::witchvm::Filter;
 
 // Lexer: Converts raw SQL into tokens
 #[derive(Debug, Clone, PartialEq)]
@@ -628,8 +630,8 @@ impl CodeGenerator {
                 };
 
                 self.emit(Instruction::Scan {
-                    index_filter: crate::witchvm::Filter::Condition(index_scan_predicate),
-                    full_scan_filter: crate::witchvm::Filter::Condition(full_scan_predicate),
+                    index_filter: Filter::Condition(index_scan_predicate),
+                    full_scan_filter: Filter::Condition(full_scan_predicate),
                     string_fields_values,
                     number_fields_values,
                 });
