@@ -44,10 +44,9 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 mod common;
+mod kv;
 mod server;
 mod server_models;
-mod kv;
-
 
 #[tokio::main]
 async fn main() {

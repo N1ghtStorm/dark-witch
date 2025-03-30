@@ -64,15 +64,15 @@ pub async fn run_witch_server() {
     // build our application with a single route
     let app = Router::new()
         .route("/", get(|| async { pentagram() }))
-        .route("/sql", get(handle_sql_request))
-        .route("/create_storage", get(create_storage))
-        .route("/delete_storage", delete(delete_storage))
-        .route("/add_key_value", post(add_key_value))
-        .route("/delete_key_value", delete(delete_key_value))
-        .route("/change_value", put(change_value))
-        .route("/get_value", get(get_value))
-        .route("/create_index", post(create_index))
-        .route("/explain", get(explain))
+        .route("/kv/sql", get(handle_sql_request))
+        .route("/kv/create_storage", get(create_storage))
+        .route("/kv/delete_storage", delete(delete_storage))
+        .route("/kv/add_key_value", post(add_key_value))
+        .route("/kv/delete_key_value", delete(delete_key_value))
+        .route("/kv/change_value", put(change_value))
+        .route("/kv/get_value", get(get_value))
+        .route("/kv/create_index", post(create_index))
+        .route("/kv/explain", get(explain))
         .with_state(database);
 
     // run our app
