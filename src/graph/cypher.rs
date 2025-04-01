@@ -45,8 +45,8 @@
 
 // Lexer: Converts raw Cypher into tokens
 
-use std::str::Chars;
 use std::iter::Peekable;
+use std::str::Chars;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
@@ -55,21 +55,21 @@ pub enum Token {
     Return,
     As,
     Where,
-    
+
     // Symbols
-    LeftParen,    // (
-    RightParen,   // )
-    LeftBrace,    // {
-    RightBrace,   // }
-    Colon,        // :
-    Comma,        // ,
-    Dot,          // .
-    
+    LeftParen,  // (
+    RightParen, // )
+    LeftBrace,  // {
+    RightBrace, // }
+    Colon,      // :
+    Comma,      // ,
+    Dot,        // .
+
     // Values
     Identifier(String),
     String(String),
     Number(f64),
-    
+
     // End of input
     EOF,
 }
@@ -83,7 +83,10 @@ impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
         let mut chars = input.chars().peekable();
         let current = chars.next().unwrap_or('\0');
-        Lexer { input: chars, current }
+        Lexer {
+            input: chars,
+            current,
+        }
     }
 
     fn advance(&mut self) {
@@ -182,7 +185,7 @@ mod tests {
     fn test_lexer() {
         let input = "MATCH (keanu:Person {name:'Keanu Reeves'}) RETURN keanu.name AS name";
         let mut lexer = Lexer::new(input);
-        
+
         let expected_tokens = vec![
             Token::Match,
             Token::LeftParen,
