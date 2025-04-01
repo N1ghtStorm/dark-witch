@@ -74,27 +74,30 @@ pub enum Token {
     EOF,
 }
 
-pub struct Lexer<'a> {
-    input: Peekable<Chars<'a>>,
+pub struct Lexer {
+    input: Vec<char>,
+    position: usize,
     current: char,
 }
 
-impl<'a> Lexer<'a> {
-    pub fn new(input: &'a str) -> Self {
-        let mut chars = input.chars().peekable();
-        let current = chars.next().unwrap_or('\0');
+impl Lexer {
+    pub fn new(input: &str) -> Self {
+        let chars: Vec<char> = input.chars().collect();
+        let current = chars.first().copied().unwrap_or('\0');
         Lexer {
             input: chars,
+            position: 0,
             current,
         }
     }
 
     fn advance(&mut self) {
-        self.current = self.input.next().unwrap_or('\0');
+        self.position += 1;
+        self.current = self.input.get(self.position).copied().unwrap_or('\0');
     }
 
-    fn peek(&mut self) -> char {
-        *self.input.peek().unwrap_or(&'\0')
+    fn peek(&self) -> char {
+        self.input.get(self.position + 1).copied().unwrap_or('\0')
     }
 
     fn skip_whitespace(&mut self) {
