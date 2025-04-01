@@ -47,6 +47,7 @@ mod common;
 mod kv;
 mod server;
 mod server_models;
+mod graph;
 
 #[tokio::main]
 async fn main() {
