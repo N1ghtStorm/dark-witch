@@ -12,6 +12,9 @@ all: build
 build:
 	$(CARGO) build $(RELEASE_FLAGS)
 
+b:
+	$(CARGO) b -r
+
 # Build with release optimizations
 release:
 	$(CARGO) build $(RELEASE_FLAGS)
@@ -29,6 +32,9 @@ test:
 run:
 	$(CARGO) run $(RELEASE_FLAGS)
 
+r:
+	$(CARGO) run -r
+	
 # Check for compilation errors without building
 check:
 	$(CARGO) check
