@@ -49,12 +49,12 @@ use crate::kv::error::Error;
 use crate::kv::{database::Database, index::Index};
 use tokio::time::{Duration, Instant};
 
-pub struct WitchVM {
+pub struct WitchVMKV {
     instruction_storage_name: Option<String>,
     output: Vec<String>,
 }
 
-impl WitchVM {
+impl WitchVMKV {
     pub fn new() -> Self {
         Self {
             instruction_storage_name: None,

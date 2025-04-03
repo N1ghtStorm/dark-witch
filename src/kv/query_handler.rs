@@ -49,7 +49,7 @@ use tokio::sync::Mutex;
 use crate::kv::database::Database;
 use crate::kv::error::Error;
 use crate::kv::sql;
-use crate::kv::witchvm::WitchVM;
+use crate::kv::witchvm::WitchVMKV;
 
 pub async fn handle_query(database: Arc<Mutex<Database>>, query: String) -> Result<String, Error> {
     let mut database = database.lock().await;
@@ -63,7 +63,7 @@ pub async fn handle_query(database: Arc<Mutex<Database>>, query: String) -> Resu
     }
     let mut generator = sql::CodeGenerator::new();
     generator.generate(&ast)?;
-    let mut vm: WitchVM = WitchVM::new();
+    let mut vm: WitchVMKV = WitchVMKV::new();
     vm.execute(&mut database, generator.instructions)?;
     Ok(vm.into_output().join(","))
 }
@@ -80,7 +80,7 @@ pub async fn explain_query(database: Arc<Mutex<Database>>, query: String) -> Res
     }
     let mut generator = sql::CodeGenerator::new();
     generator.generate(&ast)?;
-    let mut vm: WitchVM = WitchVM::new();
+    let mut vm: WitchVMKV = WitchVMKV::new();
     let results = vm.execute(&mut database, generator.instructions)?;
     Ok(results
         .into_iter()
