@@ -225,10 +225,7 @@ pub struct ReturnItem {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
-    Property {
-        variable: String,
-        property: String,
-    },
+    Property { variable: String, property: String },
     Variable(String),
 }
 
@@ -276,10 +273,10 @@ impl Parser {
 
     fn parse_match_clause(&mut self) -> Result<MatchClause, String> {
         self.expect_token(Token::Match)?;
-        
+
         let mut patterns = Vec::new();
         patterns.push(self.parse_pattern()?);
-        
+
         while self.current_token == Token::Comma {
             self.advance();
             patterns.push(self.parse_pattern()?);
@@ -290,7 +287,7 @@ impl Parser {
 
     fn parse_pattern(&mut self) -> Result<Pattern, String> {
         self.expect_token(Token::LeftParen)?;
-        
+
         let variable = match &self.current_token {
             Token::Identifier(name) => {
                 let var = name.clone();
@@ -356,7 +353,6 @@ impl Parser {
             val
         };
 
-
         Ok(Property { key, value })
     }
 
@@ -366,7 +362,7 @@ impl Parser {
         let mut items = Vec::new();
         loop {
             items.push(self.parse_return_item()?);
-            
+
             if self.current_token != Token::Comma {
                 break;
             }
@@ -378,7 +374,7 @@ impl Parser {
 
     fn parse_return_item(&mut self) -> Result<ReturnItem, String> {
         let expression = self.parse_expression()?;
-        
+
         let alias = if self.current_token == Token::As {
             self.advance();
             if let Token::Identifier(name) = &self.current_token {
@@ -479,7 +475,7 @@ mod tests {
 
         // Verify return clause
         assert_eq!(query.return_clause.items.len(), 2);
-        
+
         let first_item = &query.return_clause.items[0];
         match &first_item.expression {
             Expression::Property { variable, property } => {
