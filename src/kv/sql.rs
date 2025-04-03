@@ -44,9 +44,9 @@
 // MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 use crate::kv::error::Error;
-use crate::kv::witchvm::Instruction;
+use crate::kv::witchvm_kv::Instruction;
 
-use super::witchvm::Filter;
+use super::witchvm_kv::Filter;
 
 // Lexer: Converts raw SQL into tokens
 #[derive(Debug, Clone, PartialEq)]

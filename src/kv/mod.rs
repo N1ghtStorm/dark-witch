@@ -48,7 +48,7 @@ pub mod error;
 pub mod index;
 pub mod query_handler;
 pub mod sql;
-pub mod witchvm;
+pub mod witchvm_kv;
 
 #[cfg(feature = "local")]
 pub mod local_data;

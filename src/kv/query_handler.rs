@@ -49,7 +49,7 @@ use tokio::sync::Mutex;
 use crate::kv::database::Database;
 use crate::kv::error::Error;
 use crate::kv::sql;
-use crate::kv::witchvm::WitchVMKV;
+use crate::kv::witchvm_kv::WitchVMKV;
 
 pub async fn handle_query(database: Arc<Mutex<Database>>, query: String) -> Result<String, Error> {
     let mut database = database.lock().await;
